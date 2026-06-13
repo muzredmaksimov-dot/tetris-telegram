@@ -21,7 +21,7 @@
             align-items: center;
             font-family: system-ui, -apple-system, 'Segoe UI', monospace;
             touch-action: manipulation;
-            padding: 10px;
+            padding: 8px;
         }
 
         .game-container {
@@ -29,24 +29,24 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 12px;
+            gap: 10px;
             width: 100%;
             max-width: 500px;
             margin: 0 auto;
         }
 
-        /* ВЕРХНЯЯ ПАНЕЛЬ: рекорд + кнопка НОВАЯ */
+        /* ВЕРХНЯЯ ПАНЕЛЬ */
         .top-panel {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 10px;
             width: 100%;
-            gap: 15px;
         }
 
         .highscore-box {
             background: var(--tg-theme-secondary-bg-color, #16213e);
-            padding: 6px 18px;
+            padding: 6px 12px;
             border-radius: 40px;
             text-align: center;
             flex: 1;
@@ -55,23 +55,21 @@
         .highscore-label {
             font-size: 10px;
             color: var(--tg-theme-hint-color, #aaa);
-            letter-spacing: 1px;
         }
 
         .highscore-value {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 800;
             color: var(--tg-theme-text-color, #fff);
-            line-height: 1.2;
         }
 
-        .new-game-btn {
-            background: var(--tg-theme-destructive-text-color, #e94560);
+        .top-btn {
+            background: var(--tg-theme-button-color, #2c3e66);
             border: none;
             color: white;
-            font-size: 16px;
+            font-size: 18px;
             font-weight: bold;
-            padding: 8px 20px;
+            padding: 8px 16px;
             border-radius: 40px;
             cursor: pointer;
             box-shadow: 0 2px 0 rgba(0,0,0,0.2);
@@ -79,11 +77,20 @@
             white-space: nowrap;
         }
 
-        .new-game-btn:active {
+        .new-game-btn {
+            background: var(--tg-theme-destructive-text-color, #e94560);
+        }
+
+        .pause-btn {
+            background: var(--tg-theme-button-color, #2c3e66);
+        }
+
+        .top-btn:active {
             transform: translateY(2px);
             box-shadow: none;
         }
 
+        /* ИГРОВОЕ ПОЛЕ — АДАПТИВНОЕ */
         .canvas-wrapper {
             display: flex;
             justify-content: center;
@@ -100,35 +107,32 @@
             aspect-ratio: 1 / 2;
         }
 
-        /* НИЖНЯЯ ПАНЕЛЬ: счёт + кнопки управления */
+        /* НИЖНЯЯ ПАНЕЛЬ */
         .bottom-panel {
             width: 100%;
         }
 
         .score-box {
             background: var(--tg-theme-secondary-bg-color, #16213e);
-            padding: 6px 18px;
+            padding: 6px 12px;
             border-radius: 40px;
             text-align: center;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
 
         .score-label {
             font-size: 10px;
             color: var(--tg-theme-hint-color, #aaa);
-            letter-spacing: 1px;
         }
 
         .score-value {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 800;
             color: var(--tg-theme-text-color, #fff);
-            line-height: 1.2;
         }
 
         .controls {
             display: flex;
-            flex-wrap: wrap;
             justify-content: center;
             gap: 12px;
         }
@@ -136,19 +140,16 @@
         .ctrl-btn {
             background: var(--tg-theme-button-color, #2c3e66);
             border: none;
-            color: var(--tg-theme-button-text-color, white);
-            font-size: clamp(20px, 5vw, 28px);
+            color: white;
+            font-size: 22px;
             font-weight: bold;
-            padding: 10px 20px;
-            min-width: 65px;
+            padding: 10px 0;
+            width: 70px;
             border-radius: 50px;
             cursor: pointer;
             box-shadow: 0 3px 0 rgba(0,0,0,0.2);
             transition: all 0.03s linear;
-            touch-action: manipulation;
-            font-family: monospace;
-            flex: 1;
-            max-width: 85px;
+            text-align: center;
         }
 
         .ctrl-btn:active {
@@ -156,31 +157,53 @@
             box-shadow: none;
         }
 
+        /* АДАПТАЦИЯ ПОД МАЛЕНЬКИЕ ЭКРАНЫ */
         @media (max-width: 450px) {
             .ctrl-btn {
-                padding: 6px 12px;
-                min-width: 55px;
+                width: 55px;
                 font-size: 18px;
+                padding: 8px 0;
             }
-            .new-game-btn {
-                padding: 6px 16px;
+            .top-btn {
+                padding: 6px 12px;
                 font-size: 14px;
+            }
+            .highscore-value {
+                font-size: 16px;
             }
             .score-value {
                 font-size: 20px;
+            }
+            body {
+                padding: 5px;
+            }
+            .game-container {
+                gap: 8px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .ctrl-btn {
+                width: 48px;
+                font-size: 16px;
+            }
+            .top-btn {
+                padding: 5px 10px;
+                font-size: 12px;
             }
         }
     </style>
 </head>
 <body>
 <div class="game-container">
-    <!-- Верхняя панель: рекорд + кнопка НОВАЯ -->
+    <!-- Верхняя панель: рекорд + пауза + новая -->
     <div class="top-panel">
         <div class="highscore-box">
             <div class="highscore-label">РЕКОРД</div>
             <div class="highscore-value" id="highScoreDisplay">0</div>
         </div>
-        <button class="new-game-btn" id="newGameBtn">🔄 НОВАЯ</button>
+        <button class="top-btn pause-btn" id="pauseBtn">⏸ ПАУЗА</button>
+        <button class="top-btn new-game-btn" id="newGameBtn">🔄 НОВАЯ</button>
     </div>
 
     <!-- Игровое поле -->
@@ -220,6 +243,7 @@
         let currentPiece = null;
         let gameLoopInterval = null;
         let isGameOver = false;
+        let isPaused = false;
         let currentScore = 0;
         let highScore = 0;
         
@@ -228,6 +252,7 @@
         
         const scoreSpan = document.getElementById('scoreDisplay');
         const highScoreSpan = document.getElementById('highScoreDisplay');
+        const pauseBtn = document.getElementById('pauseBtn');
 
         const SHAPES = [
             { matrix: [[1,1,1,1]], color: '#00e5f0' },
@@ -239,6 +264,7 @@
             { matrix: [[0,0,1],[1,1,1]], color: '#6eaefc' }
         ];
 
+        // АДАПТИВНЫЙ РАЗМЕР
         function resizeCanvas() {
             const wrapper = canvas.parentElement;
             const maxWidth = wrapper.clientWidth;
@@ -253,6 +279,15 @@
             draw();
         });
         
+        // ПАУЗА
+        function togglePause() {
+            if (isGameOver) return;
+            isPaused = !isPaused;
+            pauseBtn.innerText = isPaused ? "▶ ИГРАТЬ" : "⏸ ПАУЗА";
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        }
+        
+        // РЕКОРДЫ
         function loadHighScoreFromCloud() {
             tg.CloudStorage.getItem(STORAGE_KEY, (err, value) => {
                 if (!err && value && !isNaN(parseInt(value))) {
@@ -281,6 +316,7 @@
             }
         }
         
+        // ИГРОВАЯ ЛОГИКА
         function randomPiece() {
             const idx = Math.floor(Math.random() * SHAPES.length);
             const shape = SHAPES[idx];
@@ -362,7 +398,7 @@
         }
         
         function movePiece(dx, dy) {
-            if(isGameOver || !currentPiece) return false;
+            if(isGameOver || isPaused || !currentPiece) return false;
             if(!collide(currentPiece, board, dx, dy)) {
                 currentPiece.x += dx;
                 currentPiece.y += dy;
@@ -377,7 +413,7 @@
         }
         
         function rotatePiece() {
-            if(isGameOver || !currentPiece) return;
+            if(isGameOver || isPaused || !currentPiece) return;
             const oldMatrix = currentPiece.matrix;
             const rotated = oldMatrix[0].map((_, idx) => oldMatrix.map(row => row[idx]).reverse());
             const oldPiece = {
@@ -415,6 +451,8 @@
             board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
             currentScore = 0;
             isGameOver = false;
+            isPaused = false;
+            pauseBtn.innerText = "⏸ ПАУЗА";
             scoreSpan.innerText = "0";
             currentPiece = randomPiece();
             if(collide(currentPiece, board, 0, 0)) {
@@ -422,7 +460,7 @@
                 currentPiece = randomPiece();
             }
             gameLoopInterval = setInterval(() => {
-                if(!isGameOver && currentPiece) {
+                if(!isGameOver && !isPaused && currentPiece) {
                     movePiece(0, 1);
                 }
             }, BASE_INTERVAL);
@@ -461,6 +499,16 @@
                 }
             }
             
+            // Затемнение при паузе
+            if(isPaused && !isGameOver) {
+                ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'white';
+                ctx.font = `${Math.floor(blockSize * 1.2)}px monospace`;
+                ctx.textAlign = 'center';
+                ctx.fillText('ПАУЗА', canvas.width/2, canvas.height/2);
+            }
+            
             ctx.beginPath();
             ctx.strokeStyle = '#3d3d6b';
             ctx.lineWidth = 0.5;
@@ -479,8 +527,8 @@
             document.getElementById('rightBtn').onclick = (e) => { e.preventDefault(); movePiece(1,0); };
             document.getElementById('downBtn').onclick = (e) => { e.preventDefault(); movePiece(0,1); };
             document.getElementById('newGameBtn').onclick = (e) => { e.preventDefault(); resetGame(); };
+            document.getElementById('pauseBtn').onclick = (e) => { e.preventDefault(); togglePause(); };
             
-            // Поворот только по тапу на поле
             canvas.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 rotatePiece();
@@ -495,7 +543,7 @@
                 else if(key === 'ArrowRight') { movePiece(1,0); e.preventDefault();}
                 else if(key === 'ArrowDown') { movePiece(0,1); e.preventDefault();}
                 else if(key === 'ArrowUp') { rotatePiece(); e.preventDefault();}
-                else if(key === ' ') { 
+                else if(key === ' ' || key === 'Space') { 
                     if(!isGameOver && currentPiece) {
                         while(!collide(currentPiece, board, 0, 1)) { currentPiece.y++; }
                         mergePiece();
@@ -503,6 +551,7 @@
                     }
                     e.preventDefault();
                 }
+                else if(key === 'p' || key === 'P') { togglePause(); e.preventDefault();}
                 else if(key === 'r' || key === 'R') { resetGame(); e.preventDefault();}
             });
         }
