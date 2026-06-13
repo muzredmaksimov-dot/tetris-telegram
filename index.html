@@ -21,34 +21,45 @@
             align-items: center;
             font-family: system-ui, -apple-system, 'Segoe UI', monospace;
             touch-action: manipulation;
-            padding: 6px;
+            padding: 10px;
         }
 
         .game-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 6px;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .canvas-wrapper {
+            display: flex;
+            justify-content: center;
             width: 100%;
         }
 
-        /* КОМПАКТНЫЙ CANVAS — фиксированный маленький размер */
         #boardCanvas {
             display: block;
-            width: 240px;
-            height: 480px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
             background-color: #0a0a1a;
+            /* Сохраняем пропорции 1:2 */
+            aspect-ratio: 1 / 2;
         }
 
         .info-panel {
             display: flex;
             justify-content: center;
-            gap: 24px;
+            gap: 30px;
             background: var(--tg-theme-secondary-bg-color, #16213e);
-            padding: 6px 20px;
+            padding: 8px 24px;
             border-radius: 40px;
+            flex-wrap: wrap;
         }
 
         .score-box, .highscore-box {
@@ -56,13 +67,13 @@
         }
 
         .score-label {
-            font-size: 10px;
+            font-size: clamp(10px, 3vw, 14px);
             color: var(--tg-theme-hint-color, #aaa);
             letter-spacing: 1px;
         }
 
         .score-value {
-            font-size: 20px;
+            font-size: clamp(18px, 5vw, 28px);
             font-weight: 800;
             color: var(--tg-theme-text-color, #fff);
             line-height: 1.2;
@@ -72,24 +83,26 @@
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 6px;
-            margin-top: 4px;
+            gap: 8px;
+            margin-top: 5px;
+            width: 100%;
         }
 
         .ctrl-btn {
             background: var(--tg-theme-button-color, #2c3e66);
             border: none;
             color: var(--tg-theme-button-text-color, white);
-            font-size: 18px;
+            font-size: clamp(16px, 4vw, 24px);
             font-weight: bold;
-            padding: 6px 12px;
-            min-width: 48px;
-            border-radius: 40px;
+            padding: 8px 16px;
+            min-width: 55px;
+            border-radius: 50px;
             cursor: pointer;
-            box-shadow: 0 2px 0 rgba(0,0,0,0.2);
+            box-shadow: 0 3px 0 rgba(0,0,0,0.2);
             transition: all 0.03s linear;
             touch-action: manipulation;
             font-family: monospace;
+            flex: 0 1 auto;
         }
 
         .ctrl-btn:active {
@@ -99,14 +112,34 @@
 
         .new-game-btn {
             background: var(--tg-theme-destructive-text-color, #e94560);
-            padding: 6px 16px;
-            font-size: 14px;
+            padding: 8px 20px;
+            font-size: clamp(14px, 3.5vw, 18px);
+        }
+
+        /* Для совсем маленьких экранов */
+        @media (max-width: 400px) {
+            .ctrl-btn {
+                padding: 6px 12px;
+                min-width: 48px;
+            }
+            .info-panel {
+                gap: 20px;
+                padding: 6px 18px;
+            }
+            body {
+                padding: 6px;
+            }
+            .game-container {
+                gap: 8px;
+            }
         }
     </style>
 </head>
 <body>
 <div class="game-container">
-    <canvas id="boardCanvas" width="240" height="480"></canvas>
+    <div class="canvas-wrapper">
+        <canvas id="boardCanvas"></canvas>
+    </div>
 
     <div class="info-panel">
         <div class="score-box">
@@ -134,20 +167,28 @@
         tg.expand();
         tg.enableClosingConfirmation();
 
-        // РАЗМЕРЫ ДЛЯ НОВОГО CANVAS 240x480
+        // ИГРОВЫЕ КОНСТАНТЫ
         const COLS = 10;
         const ROWS = 20;
-        const BLOCK_SIZE = 24; // 240/10 = 24, 480/20 = 24
-
-        const canvas = document.getElementById('boardCanvas');
-        const ctx = canvas.getContext('2d');
         
-        canvas.width = COLS * BLOCK_SIZE;
-        canvas.height = ROWS * BLOCK_SIZE;
+        let canvas = document.getElementById('boardCanvas');
+        let ctx = canvas.getContext('2d');
+        let blockSize = 0; // будет вычисляться динамически
+        
+        let board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+        let currentPiece = null;
+        let gameLoopInterval = null;
+        let isGameOver = false;
+        let currentScore = 0;
+        let highScore = 0;
+        
+        const BASE_INTERVAL = 450;
+        const STORAGE_KEY = 'tetris_highscore';
         
         const scoreSpan = document.getElementById('scoreDisplay');
         const highScoreSpan = document.getElementById('highScoreDisplay');
 
+        // ФИГУРЫ
         const SHAPES = [
             { matrix: [[1,1,1,1]], color: '#00e5f0' },
             { matrix: [[1,1],[1,1]], color: '#f7e476' },
@@ -158,15 +199,30 @@
             { matrix: [[0,0,1],[1,1,1]], color: '#6eaefc' }
         ];
 
-        let board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
-        let currentPiece = null;
-        let gameLoopInterval = null;
-        let isGameOver = false;
-        let currentScore = 0;
-        let highScore = 0;
+        // ========== АДАПТИВНЫЙ РАЗМЕР CANVAS ==========
+        function resizeCanvas() {
+            // Получаем реальный размер контейнера
+            const wrapper = canvas.parentElement;
+            const maxWidth = wrapper.clientWidth;
+            
+            // Устанавливаем canvas в пикселях с сохранением пропорций 1:2
+            canvas.width = maxWidth;
+            canvas.height = maxWidth * 2;
+            
+            // Вычисляем размер одного блока
+            blockSize = canvas.width / COLS;
+            
+            // Перерисовываем всё с новым размером
+            draw();
+        }
         
-        const BASE_INTERVAL = 450;
-        const STORAGE_KEY = 'tetris_highscore';
+        // Следим за изменением размера экрана (поворот телефона и т.д.)
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            draw();
+        });
+        
+        // ========== ОСТАЛЬНАЯ ЛОГИКА ИГРЫ ==========
         
         function loadHighScoreFromCloud() {
             tg.CloudStorage.getItem(STORAGE_KEY, (err, value) => {
@@ -345,45 +401,49 @@
         }
         
         function draw() {
+            if(!ctx) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
+            // Рисуем поле (с динамическим blockSize)
             for(let row = 0; row < ROWS; row++) {
                 for(let col = 0; col < COLS; col++) {
                     const color = board[row][col];
                     if(color !== 0) {
                         ctx.fillStyle = color;
-                        ctx.fillRect(col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE-0.5, BLOCK_SIZE-0.5);
+                        ctx.fillRect(col * blockSize, row * blockSize, blockSize - 0.5, blockSize - 0.5);
                     } else {
                         ctx.fillStyle = '#1f1f3a';
-                        ctx.fillRect(col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE-0.5, BLOCK_SIZE-0.5);
+                        ctx.fillRect(col * blockSize, row * blockSize, blockSize - 0.5, blockSize - 0.5);
                         ctx.fillStyle = '#2a2a4a';
-                        ctx.fillRect(col * BLOCK_SIZE+1, row * BLOCK_SIZE+1, BLOCK_SIZE-2.5, BLOCK_SIZE-2.5);
+                        ctx.fillRect(col * blockSize + 1, row * blockSize + 1, blockSize - 2.5, blockSize - 2.5);
                     }
                 }
             }
             
+            // Рисуем текущую фигуру
             if(currentPiece && !isGameOver) {
                 for(let row = 0; row < currentPiece.matrix.length; row++) {
                     for(let col = 0; col < currentPiece.matrix[0].length; col++) {
                         if(currentPiece.matrix[row][col]) {
                             ctx.fillStyle = currentPiece.color;
-                            const x = (currentPiece.x + col) * BLOCK_SIZE;
-                            const y = (currentPiece.y + row) * BLOCK_SIZE;
-                            ctx.fillRect(x, y, BLOCK_SIZE-0.5, BLOCK_SIZE-0.5);
+                            const x = (currentPiece.x + col) * blockSize;
+                            const y = (currentPiece.y + row) * blockSize;
+                            ctx.fillRect(x, y, blockSize - 0.5, blockSize - 0.5);
                         }
                     }
                 }
             }
             
+            // Сетка
             ctx.beginPath();
             ctx.strokeStyle = '#3d3d6b';
             ctx.lineWidth = 0.5;
             for(let i = 0; i <= COLS; i++) {
-                ctx.moveTo(i*BLOCK_SIZE, 0);
-                ctx.lineTo(i*BLOCK_SIZE, canvas.height);
+                ctx.moveTo(i * blockSize, 0);
+                ctx.lineTo(i * blockSize, canvas.height);
                 ctx.stroke();
-                ctx.moveTo(0, i*BLOCK_SIZE);
-                ctx.lineTo(canvas.width, i*BLOCK_SIZE);
+                ctx.moveTo(0, i * blockSize);
+                ctx.lineTo(canvas.width, i * blockSize);
                 ctx.stroke();
             }
         }
@@ -425,6 +485,7 @@
             loadHighScoreFromCloud();
             resetGame();
             attachControls();
+            resizeCanvas(); // Устанавливаем правильный размер при старте
             document.body.style.backgroundColor = 'var(--tg-theme-bg-color)';
         }
         
