@@ -9,7 +9,6 @@
         * {
             user-select: none;
             -webkit-tap-highlight-color: transparent;
-            box-sizing: border-box;
         }
 
         body {
@@ -28,42 +27,35 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             gap: 12px;
-            width: 100%;
             max-width: 100%;
         }
 
-        /* АДАПТИВНЫЙ CANVAS — растягивается под размер экрана */
-        .canvas-wrapper {
-            display: flex;
-            justify-content: center;
-            width: 100%;
-        }
-
-        #boardCanvas {
+        canvas {
             display: block;
+            margin: 0 auto;
             border-radius: 12px;
             box-shadow: 0 8px 20px rgba(0,0,0,0.3);
             background-color: #0a0a1a;
-            /* Адаптивная ширина — 95% от ширины экрана, но не больше 400px */
-            width: min(95vw, 400px);
-            height: auto;
-            /* Сохраняем пропорции 1:2 (300x600) */
-            aspect-ratio: 1 / 2;
+        }
+
+        #boardCanvas {
+            width: min(85vw, 85vh);
+            height: min(170vw, 170vh);
+            max-width: 400px;
+            max-height: 800px;
         }
 
         .info-panel {
             display: flex;
             justify-content: space-between;
             align-items: baseline;
-            gap: 20px;
+            gap: 24px;
             background: var(--tg-theme-secondary-bg-color, #16213e);
-            padding: 10px 24px;
+            padding: 12px 24px;
             border-radius: 40px;
-            width: auto;
-            flex-wrap: wrap;
-            justify-content: center;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .score-box, .highscore-box {
@@ -88,26 +80,24 @@
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 10px;
+            gap: 12px;
             margin-top: 8px;
-            width: 100%;
         }
 
         .ctrl-btn {
             background: var(--tg-theme-button-color, #2c3e66);
             border: none;
             color: var(--tg-theme-button-text-color, white);
-            font-size: 26px;
+            font-size: 28px;
             font-weight: bold;
-            padding: 10px 18px;
-            min-width: 65px;
+            padding: 12px 20px;
+            min-width: 70px;
             border-radius: 60px;
             cursor: pointer;
             box-shadow: 0 3px 0 rgba(0,0,0,0.2);
             transition: all 0.03s linear;
             touch-action: manipulation;
             font-family: monospace;
-            flex: 0 0 auto;
         }
 
         .ctrl-btn:active {
@@ -117,47 +107,19 @@
 
         .new-game-btn {
             background: var(--tg-theme-destructive-text-color, #e94560);
-            padding: 10px 24px;
+            padding: 12px 28px;
             font-size: 18px;
         }
 
-        /* Для очень маленьких экранов */
-        @media (max-width: 500px) {
-            .ctrl-btn { 
-                padding: 8px 14px; 
-                min-width: 55px; 
-                font-size: 22px; 
-            }
-            .score-value { 
-                font-size: 24px; 
-            }
-            .info-panel { 
-                gap: 15px; 
-                padding: 8px 18px; 
-            }
-            body {
-                padding: 8px;
-            }
-        }
-
-        @media (max-width: 400px) {
-            .ctrl-btn { 
-                padding: 6px 10px; 
-                min-width: 48px; 
-                font-size: 18px; 
-            }
-            .new-game-btn {
-                padding: 6px 16px;
-                font-size: 14px;
-            }
+        @media (max-width: 550px) {
+            .ctrl-btn { padding: 10px 16px; min-width: 60px; font-size: 24px; }
+            .score-value { font-size: 22px; }
         }
     </style>
 </head>
 <body>
 <div class="game-container">
-    <div class="canvas-wrapper">
-        <canvas id="boardCanvas" width="300" height="600"></canvas>
-    </div>
+    <canvas id="boardCanvas" width="300" height="600"></canvas>
 
     <div class="info-panel">
         <div class="score-box">
@@ -189,14 +151,10 @@
         // ---------- КОНСТАНТЫ ИГРЫ ----------
         const COLS = 10;
         const ROWS = 20;
-        const BLOCK_SIZE = 30; // 300/10 = 30, 600/20 = 30
+        const BLOCK_SIZE = 30;
 
         const canvas = document.getElementById('boardCanvas');
         const ctx = canvas.getContext('2d');
-        
-        // Фиксированные размеры canvas (логика работает с ними)
-        canvas.width = COLS * BLOCK_SIZE;  // 300px
-        canvas.height = ROWS * BLOCK_SIZE; // 600px
         
         const scoreSpan = document.getElementById('scoreDisplay');
         const highScoreSpan = document.getElementById('highScoreDisplay');
@@ -467,11 +425,9 @@
                 else if(key === 'ArrowDown') { movePiece(0,1); e.preventDefault();}
                 else if(key === 'ArrowUp') { rotatePiece(); e.preventDefault();}
                 else if(key === ' ') { 
-                    if(!isGameOver && currentPiece) {
-                        while(!collide(currentPiece, board, 0, 1)) { currentPiece.y++; }
-                        mergePiece();
-                        draw();
-                    }
+                    while(!collide(currentPiece, board, 0, 1)) { currentPiece.y++; }
+                    mergePiece();
+                    draw();
                     e.preventDefault();
                 }
                 else if(key === 'r' || key === 'R') { resetGame(); e.preventDefault();}
