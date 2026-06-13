@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Тетрис — Telegram Mini App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: var(--tg-theme-bg-color, #1a1a2e);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: system-ui, -apple-system, 'Segoe UI', 'Courier New', monospace;
+            touch-action: manipulation;
+            padding: 12px;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        /* АДАПТИВНЫЙ CANVAS — растягивается под размер экрана */
+        .canvas-wrapper {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
+        #boardCanvas {
+            display: block;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            background-color: #0a0a1a;
+            /* Адаптивная ширина — 95% от ширины экрана, но не больше 400px */
+            width: min(95vw, 400px);
+            height: auto;
+            /* Сохраняем пропорции 1:2 (300x600) */
+            aspect-ratio: 1 / 2;
+        }
+
+        .info-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 20px;
+            background: var(--tg-theme-secondary-bg-color, #16213e);
+            padding: 10px 24px;
+            border-radius: 40px;
+            width: auto;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .score-box, .highscore-box {
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .score-label {
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #aaa);
+            letter-spacing: 1px;
+        }
+
+        .score-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--tg-theme-text-color, #fff);
+            line-height: 1;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 8px;
+            width: 100%;
+        }
+
+        .ctrl-btn {
+            background: var(--tg-theme-button-color, #2c3e66);
+            border: none;
+            color: var(--tg-theme-button-text-color, white);
+            font-size: 26px;
+            font-weight: bold;
+            padding: 10px 18px;
+            min-width: 65px;
+            border-radius: 60px;
+            cursor: pointer;
+            box-shadow: 0 3px 0 rgba(0,0,0,0.2);
+            transition: all 0.03s linear;
+            touch-action: manipulation;
+            font-family: monospace;
+            flex: 0 0 auto;
+        }
+
+        .ctrl-btn:active {
+            transform: translateY(2px);
+            box-shadow: none;
+        }
+
+        .new-game-btn {
+            background: var(--tg-theme-destructive-text-color, #e94560);
+            padding: 10px 24px;
+            font-size: 18px;
+        }
+
+        /* Для очень маленьких экранов */
+        @media (max-width: 500px) {
+            .ctrl-btn { 
+                padding: 8px 14px; 
+                min-width: 55px; 
+                font-size: 22px; 
+            }
+            .score-value { 
+                font-size: 24px; 
+            }
+            .info-panel { 
+                gap: 15px; 
+                padding: 8px 18px; 
+            }
+            body {
+                padding: 8px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .ctrl-btn { 
+                padding: 6px 10px; 
+                min-width: 48px; 
+                font-size: 18px; 
+            }
+            .new-game-btn {
+                padding: 6px 16px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <div class="canvas-wrapper">
+        <canvas id="boardCanvas" width="300" height="600"></canvas>
+    </div>
+
+    <div class="info-panel">
+        <div class="score-box">
+            <div class="score-label">СЧЁТ</div>
+            <div class="score-value" id="scoreDisplay">0</div>
+        </div>
+        <div class="highscore-box">
+            <div class="score-label">РЕКОРД</div>
+            <div class="score-value" id="highScoreDisplay">0</div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="ctrl-btn" id="leftBtn">◀</button>
+        <button class="ctrl-btn" id="rightBtn">▶</button>
+        <button class="ctrl-btn" id="downBtn">▼</button>
+        <button class="ctrl-btn" id="rotateBtn">🔄</button>
+        <button class="ctrl-btn new-game-btn" id="newGameBtn">НОВАЯ</button>
+    </div>
+</div>
+
+<script>
+    (function(){
+        // ---------- ИНИЦИАЛИЗАЦИЯ TELEGRAM ----------
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.enableClosingConfirmation();
+
+        // ---------- КОНСТАНТЫ ИГРЫ ----------
+        const COLS = 10;
+        const ROWS = 20;
+        const BLOCK_SIZE = 30; // 300/10 = 30, 600/20 = 30
+
+        const canvas = document.getElementById('boardCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Фиксированные размеры canvas (логика работает с ними)
+        canvas.width = COLS * BLOCK_SIZE;  // 300px
+        canvas.height = ROWS * BLOCK_SIZE; // 600px
+        
+        const scoreSpan = document.getElementById('scoreDisplay');
+        const highScoreSpan = document.getElementById('highScoreDisplay');
+
+        // ---------- ФИГУРЫ ТЕТРИСА ----------
+        const SHAPES = [
+            { matrix: [[1,1,1,1]], color: '#00e5f0' },
+            { matrix: [[1,1],[1,1]], color: '#f7e476' },
+            { matrix: [[0,1,0],[1,1,1]], color: '#c084fc' },
+            { matrix: [[0,1,1],[1,1,0]], color: '#6eeb83' },
+            { matrix: [[1,1,0],[0,1,1]], color: '#fc6e6e' },
+            { matrix: [[1,0,0],[1,1,1]], color: '#fca56e' },
+            { matrix: [[0,0,1],[1,1,1]], color: '#6eaefc' }
+        ];
+
+        let board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+        let currentPiece = null;
+        let gameLoopInterval = null;
+        let isGameOver = false;
+        let currentScore = 0;
+        let highScore = 0;
+        
+        const BASE_INTERVAL = 450;
+        const STORAGE_KEY = 'tetris_highscore';
+        
+        function loadHighScoreFromCloud() {
+            tg.CloudStorage.getItem(STORAGE_KEY, (err, value) => {
+                if (!err && value && !isNaN(parseInt(value))) {
+                    highScore = parseInt(value);
+                } else {
+                    highScore = 0;
+                }
+                highScoreSpan.innerText = highScore;
+            });
+        }
+        
+        function saveHighScoreToCloud(score) {
+            tg.CloudStorage.setItem(STORAGE_KEY, score.toString(), (err) => {
+                if(err) console.warn("Cloud save error", err);
+            });
+        }
+        
+        function updateHighScoreUI() {
+            highScoreSpan.innerText = highScore;
+        }
+        
+        function trySetNewHighScore(score) {
+            if(score > highScore) {
+                highScore = score;
+                updateHighScoreUI();
+                saveHighScoreToCloud(highScore);
+                if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            }
+        }
+        
+        function randomPiece() {
+            const idx = Math.floor(Math.random() * SHAPES.length);
+            const shape = SHAPES[idx];
+            const matrixCopy = shape.matrix.map(row => [...row]);
+            return {
+                matrix: matrixCopy,
+                color: shape.color,
+                x: Math.floor((COLS - matrixCopy[0].length) / 2),
+                y: 0
+            };
+        }
+        
+        function collide(piece, board, offX = 0, offY = 0) {
+            for(let row = 0; row < piece.matrix.length; row++) {
+                for(let col = 0; col < piece.matrix[0].length; col++) {
+                    if(piece.matrix[row][col] !== 0) {
+                        const boardX = piece.x + col + offX;
+                        const boardY = piece.y + row + offY;
+                        if(boardX < 0 || boardX >= COLS || boardY >= ROWS || boardY < 0) return true;
+                        if(boardY >= 0 && board[boardY][boardX] !== 0) return true;
+                    }
+                }
+            }
+            return false;
+        }
+        
+        function mergePiece() {
+            for(let row = 0; row < currentPiece.matrix.length; row++) {
+                for(let col = 0; col < currentPiece.matrix[0].length; col++) {
+                    if(currentPiece.matrix[row][col] !== 0) {
+                        const boardX = currentPiece.x + col;
+                        const boardY = currentPiece.y + row;
+                        if(boardY >= 0 && boardY < ROWS && boardX >= 0 && boardX < COLS) {
+                            board[boardY][boardX] = currentPiece.color;
+                        }
+                    }
+                }
+            }
+            clearLines();
+            spawnNewPiece();
+        }
+        
+        function clearLines() {
+            let linesCleared = 0;
+            for(let row = ROWS-1; row >= 0; ) {
+                let full = true;
+                for(let col = 0; col < COLS; col++) {
+                    if(board[row][col] === 0) {
+                        full = false;
+                        break;
+                    }
+                }
+                if(full) {
+                    for(let r = row; r > 0; r--) {
+                        board[r] = [...board[r-1]];
+                    }
+                    board[0] = Array(COLS).fill(0);
+                    linesCleared++;
+                } else {
+                    row--;
+                }
+            }
+            
+            if(linesCleared > 0) {
+                const addScore = linesCleared === 1 ? 100 : linesCleared === 2 ? 300 : linesCleared === 3 ? 600 : 1000;
+                currentScore += addScore;
+                scoreSpan.innerText = currentScore;
+                trySetNewHighScore(currentScore);
+                if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            }
+        }
+        
+        function spawnNewPiece() {
+            currentPiece = randomPiece();
+            if(collide(currentPiece, board, 0, 0)) {
+                gameOver();
+            }
+            draw();
+        }
+        
+        function movePiece(dx, dy) {
+            if(isGameOver || !currentPiece) return false;
+            if(!collide(currentPiece, board, dx, dy)) {
+                currentPiece.x += dx;
+                currentPiece.y += dy;
+                draw();
+                return true;
+            }
+            if(dy === 1) {
+                mergePiece();
+                draw();
+            }
+            return false;
+        }
+        
+        function rotatePiece() {
+            if(isGameOver || !currentPiece) return;
+            const oldMatrix = currentPiece.matrix;
+            const rotated = oldMatrix[0].map((_, idx) => oldMatrix.map(row => row[idx]).reverse());
+            const oldPiece = {
+                matrix: currentPiece.matrix,
+                color: currentPiece.color,
+                x: currentPiece.x,
+                y: currentPiece.y
+            };
+            currentPiece.matrix = rotated;
+            let offset = 0;
+            while(collide(currentPiece, board, 0, 0)) {
+                currentPiece.x += (offset === 0 ? -1 : 1);
+                if(Math.abs(offset) > 5) {
+                    currentPiece.matrix = oldMatrix;
+                    currentPiece.x = oldPiece.x;
+                    return;
+                }
+                offset++;
+            }
+            draw();
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('soft');
+        }
+        
+        function gameOver() {
+            if(isGameOver) return;
+            isGameOver = true;
+            if(gameLoopInterval) clearInterval(gameLoopInterval);
+            gameLoopInterval = null;
+            if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+            tg.showAlert(`Игра окончена! Ваш счёт: ${currentScore}`);
+        }
+        
+        function resetGame() {
+            if(gameLoopInterval) clearInterval(gameLoopInterval);
+            board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+            currentScore = 0;
+            isGameOver = false;
+            scoreSpan.innerText = "0";
+            currentPiece = randomPiece();
+            if(collide(currentPiece, board, 0, 0)) {
+                board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+                currentPiece = randomPiece();
+            }
+            gameLoopInterval = setInterval(() => {
+                if(!isGameOver && currentPiece) {
+                    movePiece(0, 1);
+                }
+            }, BASE_INTERVAL);
+            draw();
+        }
+        
+        function draw() {
+            if(!ctx) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            for(let row = 0; row < ROWS; row++) {
+                for(let col = 0; col < COLS; col++) {
+                    const color = board[row][col];
+                    if(color !== 0) {
+                        ctx.fillStyle = color;
+                        ctx.fillRect(col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE-0.5, BLOCK_SIZE-0.5);
+                    } else {
+                        ctx.fillStyle = '#1f1f3a';
+                        ctx.fillRect(col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE-0.5, BLOCK_SIZE-0.5);
+                        ctx.fillStyle = '#2a2a4a';
+                        ctx.fillRect(col * BLOCK_SIZE+1, row * BLOCK_SIZE+1, BLOCK_SIZE-2.5, BLOCK_SIZE-2.5);
+                    }
+                }
+            }
+            
+            if(currentPiece && !isGameOver) {
+                for(let row = 0; row < currentPiece.matrix.length; row++) {
+                    for(let col = 0; col < currentPiece.matrix[0].length; col++) {
+                        if(currentPiece.matrix[row][col]) {
+                            ctx.fillStyle = currentPiece.color;
+                            const x = (currentPiece.x + col) * BLOCK_SIZE;
+                            const y = (currentPiece.y + row) * BLOCK_SIZE;
+                            ctx.fillRect(x, y, BLOCK_SIZE-0.5, BLOCK_SIZE-0.5);
+                        }
+                    }
+                }
+            }
+            
+            ctx.beginPath();
+            ctx.strokeStyle = '#3d3d6b';
+            ctx.lineWidth = 0.5;
+            for(let i = 0; i <= COLS; i++) {
+                ctx.moveTo(i*BLOCK_SIZE, 0);
+                ctx.lineTo(i*BLOCK_SIZE, canvas.height);
+                ctx.stroke();
+                ctx.moveTo(0, i*BLOCK_SIZE);
+                ctx.lineTo(canvas.width, i*BLOCK_SIZE);
+                ctx.stroke();
+            }
+        }
+        
+        function attachControls() {
+            document.getElementById('leftBtn').addEventListener('click', (e) => { e.preventDefault(); movePiece(-1,0); });
+            document.getElementById('rightBtn').addEventListener('click', (e) => { e.preventDefault(); movePiece(1,0); });
+            document.getElementById('downBtn').addEventListener('click', (e) => { e.preventDefault(); movePiece(0,1); });
+            document.getElementById('rotateBtn').addEventListener('click', (e) => { e.preventDefault(); rotatePiece(); });
+            document.getElementById('newGameBtn').addEventListener('click', (e) => { e.preventDefault(); resetGame(); });
+            
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                rotatePiece();
+            });
+            canvas.addEventListener('mousedown', (e) => {
+                rotatePiece();
+            });
+            
+            window.addEventListener('keydown', (e) => {
+                const key = e.key;
+                if(key === 'ArrowLeft') { movePiece(-1,0); e.preventDefault();}
+                else if(key === 'ArrowRight') { movePiece(1,0); e.preventDefault();}
+                else if(key === 'ArrowDown') { movePiece(0,1); e.preventDefault();}
+                else if(key === 'ArrowUp') { rotatePiece(); e.preventDefault();}
+                else if(key === ' ') { 
+                    if(!isGameOver && currentPiece) {
+                        while(!collide(currentPiece, board, 0, 1)) { currentPiece.y++; }
+                        mergePiece();
+                        draw();
+                    }
+                    e.preventDefault();
+                }
+                else if(key === 'r' || key === 'R') { resetGame(); e.preventDefault();}
+            });
+        }
+        
+        function init() {
+            loadHighScoreFromCloud();
+            resetGame();
+            attachControls();
+            document.body.style.backgroundColor = 'var(--tg-theme-bg-color)';
+        }
+        
+        init();
+    })();
+</script>
+</body>
+</html>
