@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Тетрис — Telegram Mini App</title>
-    <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
             user-select: none;
             -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
         }
 
         body {
@@ -21,15 +21,16 @@
             align-items: center;
             font-family: system-ui, -apple-system, 'Segoe UI', 'Courier New', monospace;
             touch-action: manipulation;
-            padding: 12px;
+            padding: 8px;
         }
 
         .game-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 12px;
+            gap: 8px;
             max-width: 100%;
+            width: 100%;
         }
 
         canvas {
@@ -38,25 +39,20 @@
             border-radius: 12px;
             box-shadow: 0 8px 20px rgba(0,0,0,0.3);
             background-color: #0a0a1a;
-        }
-
-        /* Игровое поле — адаптивный размер */
-        #boardCanvas {
-            width: min(85vw, 85vh);
-            height: min(170vw, 170vh);
-            max-width: 400px;
-            max-height: 800px;
+            /* Уменьшаем размер через CSS */
+            width: min(70vw, 70vh);
+            height: auto;
         }
 
         .info-panel {
             display: flex;
             justify-content: space-between;
             align-items: baseline;
-            gap: 24px;
+            gap: 20px;
             background: var(--tg-theme-secondary-bg-color, #16213e);
-            padding: 12px 24px;
+            padding: 8px 20px;
             border-radius: 40px;
-            width: 100%;
+            width: auto;
             box-sizing: border-box;
         }
 
@@ -66,13 +62,13 @@
         }
 
         .score-label {
-            font-size: 14px;
+            font-size: 12px;
             color: var(--tg-theme-hint-color, #aaa);
             letter-spacing: 1px;
         }
 
         .score-value {
-            font-size: 28px;
+            font-size: 24px;
             font-weight: 800;
             color: var(--tg-theme-text-color, #fff);
             line-height: 1;
@@ -82,19 +78,19 @@
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 12px;
-            margin-top: 8px;
+            gap: 10px;
+            margin-top: 4px;
         }
 
         .ctrl-btn {
             background: var(--tg-theme-button-color, #2c3e66);
             border: none;
             color: var(--tg-theme-button-text-color, white);
-            font-size: 28px;
+            font-size: 24px;
             font-weight: bold;
-            padding: 12px 20px;
-            min-width: 70px;
-            border-radius: 60px;
+            padding: 8px 16px;
+            min-width: 55px;
+            border-radius: 50px;
             cursor: pointer;
             box-shadow: 0 3px 0 rgba(0,0,0,0.2);
             transition: all 0.03s linear;
@@ -109,13 +105,15 @@
 
         .new-game-btn {
             background: var(--tg-theme-destructive-text-color, #e94560);
-            padding: 12px 28px;
-            font-size: 18px;
+            padding: 8px 20px;
+            font-size: 16px;
         }
 
-        @media (max-width: 550px) {
-            .ctrl-btn { padding: 10px 16px; min-width: 60px; font-size: 24px; }
-            .score-value { font-size: 22px; }
+        /* Для очень маленьких экранов */
+        @media (max-width: 480px) {
+            .ctrl-btn { padding: 6px 12px; min-width: 50px; font-size: 20px; }
+            .score-value { font-size: 20px; }
+            .info-panel { gap: 15px; padding: 6px 16px; }
         }
     </style>
 </head>
@@ -147,65 +145,45 @@
     (function(){
         // ---------- ИНИЦИАЛИЗАЦИЯ TELEGRAM ----------
         const tg = window.Telegram.WebApp;
-        tg.expand();  // Растягиваем мини-апп на весь экран
-        tg.enableClosingConfirmation(); // Спросить при закрытии
+        tg.expand();
+        tg.enableClosingConfirmation();
 
         // ---------- КОНСТАНТЫ ИГРЫ ----------
         const COLS = 10;
         const ROWS = 20;
-        const BLOCK_SIZE = 30;   // px, canvas 300x600
+        const BLOCK_SIZE = 30; // реальный размер в px на canvas
 
         const canvas = document.getElementById('boardCanvas');
         const ctx = canvas.getContext('2d');
         
-        // DOM элементы
+        // Устанавливаем реальные размеры canvas (пиксели)
+        canvas.width = COLS * BLOCK_SIZE;  // 300px
+        canvas.height = ROWS * BLOCK_SIZE; // 600px
+        
+        // Адаптивный размер через CSS (уже есть в стилях)
+        
         const scoreSpan = document.getElementById('scoreDisplay');
         const highScoreSpan = document.getElementById('highScoreDisplay');
 
         // ---------- ФИГУРЫ ТЕТРИСА ----------
         const SHAPES = [
-            {   // I
-                matrix: [[1,1,1,1]],
-                color: '#00e5f0'
-            },
-            {   // O
-                matrix: [[1,1],[1,1]],
-                color: '#f7e476'
-            },
-            {   // T
-                matrix: [[0,1,0],[1,1,1]],
-                color: '#c084fc'
-            },
-            {   // S
-                matrix: [[0,1,1],[1,1,0]],
-                color: '#6eeb83'
-            },
-            {   // Z
-                matrix: [[1,1,0],[0,1,1]],
-                color: '#fc6e6e'
-            },
-            {   // L
-                matrix: [[1,0,0],[1,1,1]],
-                color: '#fca56e'
-            },
-            {   // J
-                matrix: [[0,0,1],[1,1,1]],
-                color: '#6eaefc'
-            }
+            { matrix: [[1,1,1,1]], color: '#00e5f0' },
+            { matrix: [[1,1],[1,1]], color: '#f7e476' },
+            { matrix: [[0,1,0],[1,1,1]], color: '#c084fc' },
+            { matrix: [[0,1,1],[1,1,0]], color: '#6eeb83' },
+            { matrix: [[1,1,0],[0,1,1]], color: '#fc6e6e' },
+            { matrix: [[1,0,0],[1,1,1]], color: '#fca56e' },
+            { matrix: [[0,0,1],[1,1,1]], color: '#6eaefc' }
         ];
 
-        // Глобальное состояние
         let board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
-        let currentPiece = null;   // { matrix, color, x, y }
+        let currentPiece = null;
         let gameLoopInterval = null;
         let isGameOver = false;
         let currentScore = 0;
         let highScore = 0;
         
-        // Базовая скорость (мс на тик)
         const BASE_INTERVAL = 450;
-        
-        // ---------- ФУНКЦИИ РАБОТЫ С РЕКОРДАМИ (CloudStorage) ----------
         const STORAGE_KEY = 'tetris_highscore';
         
         function loadHighScoreFromCloud() {
@@ -234,12 +212,10 @@
                 highScore = score;
                 updateHighScoreUI();
                 saveHighScoreToCloud(highScore);
-                // Виброотдача при рекорде (если поддерживается)
                 if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
             }
         }
         
-        // ---------- ИГРОВАЯ ЛОГИКА ----------
         function randomPiece() {
             const idx = Math.floor(Math.random() * SHAPES.length);
             const shape = SHAPES[idx];
@@ -252,7 +228,6 @@
             };
         }
         
-        // Проверка коллизии
         function collide(piece, board, offX = 0, offY = 0) {
             for(let row = 0; row < piece.matrix.length; row++) {
                 for(let col = 0; col < piece.matrix[0].length; col++) {
@@ -267,7 +242,6 @@
             return false;
         }
         
-        // Закрепить фигуру на поле
         function mergePiece() {
             for(let row = 0; row < currentPiece.matrix.length; row++) {
                 for(let col = 0; col < currentPiece.matrix[0].length; col++) {
@@ -284,7 +258,6 @@
             spawnNewPiece();
         }
         
-        // Очистка заполненных линий и подсчёт очков
         function clearLines() {
             let linesCleared = 0;
             for(let row = ROWS-1; row >= 0; ) {
@@ -296,31 +269,25 @@
                     }
                 }
                 if(full) {
-                    // Удаляем строку
                     for(let r = row; r > 0; r--) {
                         board[r] = [...board[r-1]];
                     }
                     board[0] = Array(COLS).fill(0);
                     linesCleared++;
-                    // Проверяем эту же строку снова, т.к. всё сместилось
                 } else {
                     row--;
                 }
             }
             
             if(linesCleared > 0) {
-                // Начисление очков: 100*линии^2
                 const addScore = linesCleared === 1 ? 100 : linesCleared === 2 ? 300 : linesCleared === 3 ? 600 : 1000;
                 currentScore += addScore;
                 scoreSpan.innerText = currentScore;
                 trySetNewHighScore(currentScore);
-                
-                // Лёгкая вибрация при очистке
                 if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
             }
         }
         
-        // Спавн новой фигуры -> game over проверка
         function spawnNewPiece() {
             currentPiece = randomPiece();
             if(collide(currentPiece, board, 0, 0)) {
@@ -337,7 +304,6 @@
                 draw();
                 return true;
             }
-            // Если не можем двигаться вниз — закрепляем
             if(dy === 1) {
                 mergePiece();
                 draw();
@@ -347,7 +313,6 @@
         
         function rotatePiece() {
             if(isGameOver || !currentPiece) return;
-            // Матрица поворота 90°
             const oldMatrix = currentPiece.matrix;
             const rotated = oldMatrix[0].map((_, idx) => oldMatrix.map(row => row[idx]).reverse());
             const oldPiece = {
@@ -357,7 +322,6 @@
                 y: currentPiece.y
             };
             currentPiece.matrix = rotated;
-            // Корректировка от стены
             let offset = 0;
             while(collide(currentPiece, board, 0, 0)) {
                 currentPiece.x += (offset === 0 ? -1 : 1);
@@ -372,16 +336,6 @@
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('soft');
         }
         
-        // Дроп до упора
-        function hardDrop() {
-            if(isGameOver || !currentPiece) return;
-            while(!collide(currentPiece, board, 0, 1)) {
-                currentPiece.y++;
-            }
-            mergePiece(); // закрепляем и спавним новую
-            draw();
-        }
-        
         function gameOver() {
             if(isGameOver) return;
             isGameOver = true;
@@ -393,20 +347,15 @@
         
         function resetGame() {
             if(gameLoopInterval) clearInterval(gameLoopInterval);
-            // Сброс полей
             board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
             currentScore = 0;
             isGameOver = false;
             scoreSpan.innerText = "0";
-            // Спавним новую фигуру
             currentPiece = randomPiece();
-            // Проверка на проигрыш при рестарте (не должно быть, но перестраховка)
             if(collide(currentPiece, board, 0, 0)) {
-                // чистый борт не может collide с первой фигурой?
                 board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
                 currentPiece = randomPiece();
             }
-            // Запустить цикл заново
             gameLoopInterval = setInterval(() => {
                 if(!isGameOver && currentPiece) {
                     movePiece(0, 1);
@@ -415,19 +364,16 @@
             draw();
         }
         
-        // ---------- ОТРИСОВКА ----------
         function draw() {
             if(!ctx) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Отрисовка поля
             for(let row = 0; row < ROWS; row++) {
                 for(let col = 0; col < COLS; col++) {
                     const color = board[row][col];
                     if(color !== 0) {
                         ctx.fillStyle = color;
                         ctx.fillRect(col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE-0.5, BLOCK_SIZE-0.5);
-                        ctx.shadowBlur = 0;
                     } else {
                         ctx.fillStyle = '#1f1f3a';
                         ctx.fillRect(col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE-0.5, BLOCK_SIZE-0.5);
@@ -437,7 +383,6 @@
                 }
             }
             
-            // Текущая фигура
             if(currentPiece && !isGameOver) {
                 for(let row = 0; row < currentPiece.matrix.length; row++) {
                     for(let col = 0; col < currentPiece.matrix[0].length; col++) {
@@ -451,7 +396,6 @@
                 }
             }
             
-            // сетка
             ctx.beginPath();
             ctx.strokeStyle = '#3d3d6b';
             ctx.lineWidth = 0.5;
@@ -465,7 +409,6 @@
             }
         }
         
-        // ---------- УПРАВЛЕНИЕ (Кнопки + клавиатура) ----------
         function attachControls() {
             document.getElementById('leftBtn').addEventListener('click', (e) => { e.preventDefault(); movePiece(-1,0); });
             document.getElementById('rightBtn').addEventListener('click', (e) => { e.preventDefault(); movePiece(1,0); });
@@ -473,7 +416,6 @@
             document.getElementById('rotateBtn').addEventListener('click', (e) => { e.preventDefault(); rotatePiece(); });
             document.getElementById('newGameBtn').addEventListener('click', (e) => { e.preventDefault(); resetGame(); });
             
-            // Тап по канвасу = поворот (удобно на телефоне)
             canvas.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 rotatePiece();
@@ -482,24 +424,28 @@
                 rotatePiece();
             });
             
-            // Клавиатура для отладки/ПК
             window.addEventListener('keydown', (e) => {
                 const key = e.key;
                 if(key === 'ArrowLeft') { movePiece(-1,0); e.preventDefault();}
                 else if(key === 'ArrowRight') { movePiece(1,0); e.preventDefault();}
                 else if(key === 'ArrowDown') { movePiece(0,1); e.preventDefault();}
                 else if(key === 'ArrowUp') { rotatePiece(); e.preventDefault();}
-                else if(key === ' ' || key === 'Space') { hardDrop(); e.preventDefault();}
+                else if(key === ' ') { 
+                    if(!isGameOver && currentPiece) {
+                        while(!collide(currentPiece, board, 0, 1)) { currentPiece.y++; }
+                        mergePiece();
+                        draw();
+                    }
+                    e.preventDefault();
+                }
                 else if(key === 'r' || key === 'R') { resetGame(); e.preventDefault();}
             });
         }
         
-        // ---------- СТАРТ ----------
         function init() {
             loadHighScoreFromCloud();
-            resetGame();  // запускает интервал, создает фигуру, рисует
+            resetGame();
             attachControls();
-            // Принудительно применяем цвета темы Telegram (кнопки уже обработаны CSS vars)
             document.body.style.backgroundColor = 'var(--tg-theme-bg-color)';
         }
         
