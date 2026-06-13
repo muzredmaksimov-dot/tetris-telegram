@@ -35,6 +35,55 @@
             margin: 0 auto;
         }
 
+        /* ВЕРХНЯЯ ПАНЕЛЬ: рекорд + кнопка НОВАЯ */
+        .top-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            gap: 15px;
+        }
+
+        .highscore-box {
+            background: var(--tg-theme-secondary-bg-color, #16213e);
+            padding: 6px 18px;
+            border-radius: 40px;
+            text-align: center;
+            flex: 1;
+        }
+
+        .highscore-label {
+            font-size: 10px;
+            color: var(--tg-theme-hint-color, #aaa);
+            letter-spacing: 1px;
+        }
+
+        .highscore-value {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--tg-theme-text-color, #fff);
+            line-height: 1.2;
+        }
+
+        .new-game-btn {
+            background: var(--tg-theme-destructive-text-color, #e94560);
+            border: none;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 8px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            box-shadow: 0 2px 0 rgba(0,0,0,0.2);
+            transition: all 0.03s linear;
+            white-space: nowrap;
+        }
+
+        .new-game-btn:active {
+            transform: translateY(2px);
+            box-shadow: none;
+        }
+
         .canvas-wrapper {
             display: flex;
             justify-content: center;
@@ -48,32 +97,30 @@
             border-radius: 12px;
             box-shadow: 0 8px 20px rgba(0,0,0,0.3);
             background-color: #0a0a1a;
-            /* Сохраняем пропорции 1:2 */
             aspect-ratio: 1 / 2;
         }
 
-        .info-panel {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            background: var(--tg-theme-secondary-bg-color, #16213e);
-            padding: 8px 24px;
-            border-radius: 40px;
-            flex-wrap: wrap;
+        /* НИЖНЯЯ ПАНЕЛЬ: счёт + кнопки управления */
+        .bottom-panel {
+            width: 100%;
         }
 
-        .score-box, .highscore-box {
+        .score-box {
+            background: var(--tg-theme-secondary-bg-color, #16213e);
+            padding: 6px 18px;
+            border-radius: 40px;
             text-align: center;
+            margin-bottom: 12px;
         }
 
         .score-label {
-            font-size: clamp(10px, 3vw, 14px);
+            font-size: 10px;
             color: var(--tg-theme-hint-color, #aaa);
             letter-spacing: 1px;
         }
 
         .score-value {
-            font-size: clamp(18px, 5vw, 28px);
+            font-size: 24px;
             font-weight: 800;
             color: var(--tg-theme-text-color, #fff);
             line-height: 1.2;
@@ -83,26 +130,25 @@
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 8px;
-            margin-top: 5px;
-            width: 100%;
+            gap: 12px;
         }
 
         .ctrl-btn {
             background: var(--tg-theme-button-color, #2c3e66);
             border: none;
             color: var(--tg-theme-button-text-color, white);
-            font-size: clamp(16px, 4vw, 24px);
+            font-size: clamp(20px, 5vw, 28px);
             font-weight: bold;
-            padding: 8px 16px;
-            min-width: 55px;
+            padding: 10px 20px;
+            min-width: 65px;
             border-radius: 50px;
             cursor: pointer;
             box-shadow: 0 3px 0 rgba(0,0,0,0.2);
             transition: all 0.03s linear;
             touch-action: manipulation;
             font-family: monospace;
-            flex: 0 1 auto;
+            flex: 1;
+            max-width: 85px;
         }
 
         .ctrl-btn:active {
@@ -110,54 +156,50 @@
             box-shadow: none;
         }
 
-        .new-game-btn {
-            background: var(--tg-theme-destructive-text-color, #e94560);
-            padding: 8px 20px;
-            font-size: clamp(14px, 3.5vw, 18px);
-        }
-
-        /* Для совсем маленьких экранов */
-        @media (max-width: 400px) {
+        @media (max-width: 450px) {
             .ctrl-btn {
                 padding: 6px 12px;
-                min-width: 48px;
+                min-width: 55px;
+                font-size: 18px;
             }
-            .info-panel {
-                gap: 20px;
-                padding: 6px 18px;
+            .new-game-btn {
+                padding: 6px 16px;
+                font-size: 14px;
             }
-            body {
-                padding: 6px;
-            }
-            .game-container {
-                gap: 8px;
+            .score-value {
+                font-size: 20px;
             }
         }
     </style>
 </head>
 <body>
 <div class="game-container">
+    <!-- Верхняя панель: рекорд + кнопка НОВАЯ -->
+    <div class="top-panel">
+        <div class="highscore-box">
+            <div class="highscore-label">РЕКОРД</div>
+            <div class="highscore-value" id="highScoreDisplay">0</div>
+        </div>
+        <button class="new-game-btn" id="newGameBtn">🔄 НОВАЯ</button>
+    </div>
+
+    <!-- Игровое поле -->
     <div class="canvas-wrapper">
         <canvas id="boardCanvas"></canvas>
     </div>
 
-    <div class="info-panel">
+    <!-- Нижняя панель: счёт + кнопки -->
+    <div class="bottom-panel">
         <div class="score-box">
             <div class="score-label">СЧЁТ</div>
             <div class="score-value" id="scoreDisplay">0</div>
         </div>
-        <div class="highscore-box">
-            <div class="score-label">РЕКОРД</div>
-            <div class="score-value" id="highScoreDisplay">0</div>
-        </div>
-    </div>
 
-    <div class="controls">
-        <button class="ctrl-btn" id="leftBtn">◀</button>
-        <button class="ctrl-btn" id="rightBtn">▶</button>
-        <button class="ctrl-btn" id="downBtn">▼</button>
-        <button class="ctrl-btn" id="rotateBtn">🔄</button>
-        <button class="ctrl-btn new-game-btn" id="newGameBtn">НОВАЯ</button>
+        <div class="controls">
+            <button class="ctrl-btn" id="leftBtn">◀</button>
+            <button class="ctrl-btn" id="rightBtn">▶</button>
+            <button class="ctrl-btn" id="downBtn">▼</button>
+        </div>
     </div>
 </div>
 
@@ -167,13 +209,12 @@
         tg.expand();
         tg.enableClosingConfirmation();
 
-        // ИГРОВЫЕ КОНСТАНТЫ
         const COLS = 10;
         const ROWS = 20;
         
         let canvas = document.getElementById('boardCanvas');
         let ctx = canvas.getContext('2d');
-        let blockSize = 0; // будет вычисляться динамически
+        let blockSize = 0;
         
         let board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
         let currentPiece = null;
@@ -188,7 +229,6 @@
         const scoreSpan = document.getElementById('scoreDisplay');
         const highScoreSpan = document.getElementById('highScoreDisplay');
 
-        // ФИГУРЫ
         const SHAPES = [
             { matrix: [[1,1,1,1]], color: '#00e5f0' },
             { matrix: [[1,1],[1,1]], color: '#f7e476' },
@@ -199,30 +239,19 @@
             { matrix: [[0,0,1],[1,1,1]], color: '#6eaefc' }
         ];
 
-        // ========== АДАПТИВНЫЙ РАЗМЕР CANVAS ==========
         function resizeCanvas() {
-            // Получаем реальный размер контейнера
             const wrapper = canvas.parentElement;
             const maxWidth = wrapper.clientWidth;
-            
-            // Устанавливаем canvas в пикселях с сохранением пропорций 1:2
             canvas.width = maxWidth;
             canvas.height = maxWidth * 2;
-            
-            // Вычисляем размер одного блока
             blockSize = canvas.width / COLS;
-            
-            // Перерисовываем всё с новым размером
             draw();
         }
         
-        // Следим за изменением размера экрана (поворот телефона и т.д.)
         window.addEventListener('resize', () => {
             resizeCanvas();
             draw();
         });
-        
-        // ========== ОСТАЛЬНАЯ ЛОГИКА ИГРЫ ==========
         
         function loadHighScoreFromCloud() {
             tg.CloudStorage.getItem(STORAGE_KEY, (err, value) => {
@@ -404,7 +433,6 @@
             if(!ctx) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Рисуем поле (с динамическим blockSize)
             for(let row = 0; row < ROWS; row++) {
                 for(let col = 0; col < COLS; col++) {
                     const color = board[row][col];
@@ -420,7 +448,6 @@
                 }
             }
             
-            // Рисуем текущую фигуру
             if(currentPiece && !isGameOver) {
                 for(let row = 0; row < currentPiece.matrix.length; row++) {
                     for(let col = 0; col < currentPiece.matrix[0].length; col++) {
@@ -434,7 +461,6 @@
                 }
             }
             
-            // Сетка
             ctx.beginPath();
             ctx.strokeStyle = '#3d3d6b';
             ctx.lineWidth = 0.5;
@@ -452,9 +478,9 @@
             document.getElementById('leftBtn').onclick = (e) => { e.preventDefault(); movePiece(-1,0); };
             document.getElementById('rightBtn').onclick = (e) => { e.preventDefault(); movePiece(1,0); };
             document.getElementById('downBtn').onclick = (e) => { e.preventDefault(); movePiece(0,1); };
-            document.getElementById('rotateBtn').onclick = (e) => { e.preventDefault(); rotatePiece(); };
             document.getElementById('newGameBtn').onclick = (e) => { e.preventDefault(); resetGame(); };
             
+            // Поворот только по тапу на поле
             canvas.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 rotatePiece();
@@ -485,7 +511,7 @@
             loadHighScoreFromCloud();
             resetGame();
             attachControls();
-            resizeCanvas(); // Устанавливаем правильный размер при старте
+            resizeCanvas();
             document.body.style.backgroundColor = 'var(--tg-theme-bg-color)';
         }
         
