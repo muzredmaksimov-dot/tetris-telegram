@@ -21,18 +21,18 @@
             align-items: center;
             font-family: system-ui, -apple-system, 'Segoe UI', monospace;
             touch-action: manipulation;
-            padding: 8px;
+            padding: 6px;
         }
 
         .game-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
             gap: 8px;
             width: 100%;
-            max-width: 100%;
-            height: 100%;
+            height: 98vh;
+            max-width: 500px;
         }
 
         /* ВЕРХНЯЯ ПАНЕЛЬ */
@@ -47,19 +47,19 @@
 
         .highscore-box {
             background: var(--tg-theme-secondary-bg-color, #16213e);
-            padding: 5px 10px;
+            padding: 6px 12px;
             border-radius: 40px;
             text-align: center;
             flex: 1;
         }
 
         .highscore-label {
-            font-size: 9px;
+            font-size: 10px;
             color: var(--tg-theme-hint-color, #aaa);
         }
 
         .highscore-value {
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 800;
             color: var(--tg-theme-text-color, #fff);
         }
@@ -68,9 +68,9 @@
             background: var(--tg-theme-button-color, #2c3e66);
             border: none;
             color: white;
-            font-size: 12px;
+            font-size: 13px;
             font-weight: bold;
-            padding: 6px 12px;
+            padding: 8px 14px;
             border-radius: 40px;
             cursor: pointer;
             box-shadow: 0 2px 0 rgba(0,0,0,0.2);
@@ -87,19 +87,21 @@
             box-shadow: none;
         }
 
-        /* ИГРОВОЕ ПОЛЕ — ОГРАНИЧИВАЕМ ВЫСОТУ */
+        /* ИГРОВОЕ ПОЛЕ — РАСТЯГИВАЕТСЯ */
         .canvas-wrapper {
             display: flex;
             justify-content: center;
+            align-items: center;
             width: 100%;
-            flex-shrink: 1;
+            flex-grow: 1;
+            min-height: 0;
         }
 
         #boardCanvas {
             display: block;
-            width: 100%;
-            height: auto;
-            max-height: 55vh;
+            width: auto;
+            height: 100%;
+            max-height: 100%;
             border-radius: 12px;
             box-shadow: 0 8px 20px rgba(0,0,0,0.3);
             background-color: #0a0a1a;
@@ -113,19 +115,19 @@
 
         .score-box {
             background: var(--tg-theme-secondary-bg-color, #16213e);
-            padding: 5px 10px;
+            padding: 6px 12px;
             border-radius: 40px;
             text-align: center;
             margin-bottom: 8px;
         }
 
         .score-label {
-            font-size: 9px;
+            font-size: 10px;
             color: var(--tg-theme-hint-color, #aaa);
         }
 
         .score-value {
-            font-size: 18px;
+            font-size: 20px;
             font-weight: 800;
             color: var(--tg-theme-text-color, #fff);
         }
@@ -133,17 +135,17 @@
         .controls {
             display: flex;
             justify-content: center;
-            gap: 12px;
+            gap: 15px;
         }
 
         .ctrl-btn {
             background: var(--tg-theme-button-color, #2c3e66);
             border: none;
             color: white;
-            font-size: 20px;
+            font-size: 22px;
             font-weight: bold;
-            padding: 8px 0;
-            width: 65px;
+            padding: 10px 0;
+            width: 75px;
             border-radius: 50px;
             cursor: pointer;
             box-shadow: 0 3px 0 rgba(0,0,0,0.2);
@@ -159,30 +161,27 @@
         /* МАЛЕНЬКИЕ ЭКРАНЫ */
         @media (max-width: 450px) {
             .ctrl-btn {
-                width: 55px;
-                font-size: 18px;
-                padding: 6px 0;
+                width: 65px;
+                font-size: 20px;
+                padding: 8px 0;
             }
             .top-btn {
-                padding: 5px 10px;
-                font-size: 11px;
+                padding: 6px 12px;
+                font-size: 12px;
             }
-            #boardCanvas {
-                max-height: 50vh;
+            .highscore-value, .score-value {
+                font-size: 16px;
             }
         }
 
         @media (max-width: 380px) {
             .ctrl-btn {
-                width: 48px;
-                font-size: 16px;
+                width: 55px;
+                font-size: 18px;
             }
             .top-btn {
-                padding: 4px 8px;
-                font-size: 10px;
-            }
-            #boardCanvas {
-                max-height: 45vh;
+                padding: 5px 10px;
+                font-size: 11px;
             }
         }
     </style>
@@ -253,32 +252,38 @@
             { matrix: [[0,0,1],[1,1,1]], color: '#6eaefc' }
         ];
 
-        // АДАПТИВНЫЙ РАЗМЕР С УЧЁТОМ ВЫСОТЫ
+        // АДАПТИВНЫЙ РАЗМЕР — поле занимает ВСЮ доступную высоту
         function resizeCanvas() {
             const wrapper = canvas.parentElement;
+            const maxHeight = wrapper.clientHeight;
             const maxWidth = wrapper.clientWidth;
             
-            // Ограничиваем высоту — не более 55% от высоты экрана
-            const maxHeight = window.innerHeight * 0.55;
-            const calculatedHeight = maxWidth * 2;
+            // Поле должно быть пропорции 1:2
+            const idealWidth = maxHeight / 2;
             
-            if (calculatedHeight > maxHeight) {
-                // Если поле слишком высокое — подстраиваем под высоту
-                canvas.style.width = (maxHeight / 2) + 'px';
-                canvas.width = maxHeight / 2;
+            if (idealWidth <= maxWidth) {
+                // Ограничение по высоте
                 canvas.style.height = maxHeight + 'px';
                 canvas.height = maxHeight;
+                canvas.style.width = (maxHeight / 2) + 'px';
+                canvas.width = maxHeight / 2;
             } else {
-                // Иначе растягиваем по ширине
+                // Ограничение по ширине
                 canvas.style.width = maxWidth + 'px';
                 canvas.width = maxWidth;
-                canvas.style.height = calculatedHeight + 'px';
-                canvas.height = calculatedHeight;
+                canvas.style.height = (maxWidth * 2) + 'px';
+                canvas.height = maxWidth * 2;
             }
             
             blockSize = canvas.width / COLS;
             draw();
         }
+        
+        // Наблюдатель за изменением размера контейнера
+        const resizeObserver = new ResizeObserver(() => {
+            resizeCanvas();
+        });
+        resizeObserver.observe(canvas.parentElement);
         
         window.addEventListener('resize', () => {
             setTimeout(resizeCanvas, 10);
