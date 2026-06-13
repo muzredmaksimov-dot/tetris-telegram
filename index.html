@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Тетрис — Telegram Mini App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Библиотека для HLS (Радио МИР) -->
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
         * {
             user-select: none;
@@ -38,30 +36,32 @@
             margin: 0 auto;
         }
 
-        /* ВЕРХНЯЯ ПАНЕЛЬ */
+        /* ВЕРХНЯЯ ПАНЕЛЬ — УМЕНЬШЕННАЯ */
         .top-panel {
             display: flex;
             justify-content: space-between;
-            gap: 12px;
+            align-items: center;
+            gap: 10px;
             width: 100%;
             flex-shrink: 0;
         }
 
         .highscore-box {
             background: var(--tg-theme-secondary-bg-color, #16213e);
-            padding: 10px 16px;
-            border-radius: 50px;
+            padding: 5px 12px;
+            border-radius: 40px;
             text-align: center;
-            flex: 1;
+            flex: 0 1 auto;
+            min-width: 80px;
         }
 
         .highscore-label {
-            font-size: 12px;
+            font-size: 9px;
             color: var(--tg-theme-hint-color, #aaa);
         }
 
         .highscore-value {
-            font-size: 24px;
+            font-size: 16px;
             font-weight: 800;
             color: var(--tg-theme-text-color, #fff);
             line-height: 1.2;
@@ -71,12 +71,12 @@
             background: var(--tg-theme-button-color, #2c3e66);
             border: none;
             color: white;
-            font-size: 16px;
+            font-size: 12px;
             font-weight: bold;
-            padding: 10px 20px;
-            border-radius: 50px;
+            padding: 5px 12px;
+            border-radius: 40px;
             cursor: pointer;
-            box-shadow: 0 3px 0 rgba(0,0,0,0.2);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.2);
             transition: all 0.03s linear;
             white-space: nowrap;
         }
@@ -86,82 +86,8 @@
         }
 
         .top-btn:active {
-            transform: translateY(2px);
+            transform: translateY(1px);
             box-shadow: none;
-        }
-
-        /* РАДИО-ПЛЕЕР */
-        .radio-player {
-            background: var(--tg-theme-secondary-bg-color, #16213e);
-            border-radius: 50px;
-            padding: 8px 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 15px;
-            width: 100%;
-            flex-shrink: 0;
-        }
-
-        .radio-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex: 1;
-            min-width: 0;
-        }
-
-        .radio-icon {
-            font-size: 22px;
-        }
-
-        .radio-station {
-            font-size: 14px;
-            font-weight: bold;
-            color: var(--tg-theme-text-color, #fff);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .radio-controls {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-
-        .radio-btn {
-            background: var(--tg-theme-button-color, #2c3e66);
-            border: none;
-            color: white;
-            font-size: 18px;
-            font-weight: bold;
-            padding: 8px 16px;
-            border-radius: 40px;
-            cursor: pointer;
-            min-width: 60px;
-        }
-
-        .radio-btn:active {
-            transform: scale(0.95);
-        }
-
-        .volume-slider {
-            width: 80px;
-            height: 4px;
-            -webkit-appearance: none;
-            background: #3d3d6b;
-            border-radius: 4px;
-            outline: none;
-        }
-
-        .volume-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: #6eaefc;
-            cursor: pointer;
         }
 
         /* ИГРОВОЕ ПОЛЕ */
@@ -192,24 +118,24 @@
 
         .score-box {
             background: var(--tg-theme-secondary-bg-color, #16213e);
-            padding: 10px 16px;
-            border-radius: 50px;
+            padding: 5px 12px;
+            border-radius: 40px;
             text-align: center;
             margin-bottom: 12px;
         }
 
         .score-label {
-            font-size: 12px;
+            font-size: 9px;
             color: var(--tg-theme-hint-color, #aaa);
         }
 
         .score-value {
-            font-size: 24px;
+            font-size: 16px;
             font-weight: 800;
             color: var(--tg-theme-text-color, #fff);
         }
 
-        /* КНОПКИ УПРАВЛЕНИЯ — УВЕЛИЧЕНЫ В 2 РАЗА */
+        /* КНОПКИ УПРАВЛЕНИЯ — БОЛЬШИЕ */
         .controls {
             display: flex;
             justify-content: center;
@@ -236,23 +162,15 @@
             box-shadow: none;
         }
 
-        /* АДАПТАЦИЯ ДЛЯ НЕБОЛЬШИХ ЭКРАНОВ (НО КНОПКИ ВСЁ РАВНО КРУПНЫЕ) */
+        /* АДАПТАЦИЯ ДЛЯ НЕБОЛЬШИХ ЭКРАНОВ */
         @media (max-width: 500px) {
             .ctrl-btn {
                 width: 90px;
                 font-size: 32px;
                 padding: 14px 0;
             }
-            .top-btn {
-                padding: 8px 16px;
-                font-size: 14px;
-            }
-            .radio-btn {
-                font-size: 16px;
-                padding: 6px 12px;
-            }
-            .volume-slider {
-                width: 70px;
+            .controls {
+                gap: 15px;
             }
         }
 
@@ -262,14 +180,12 @@
                 font-size: 28px;
                 padding: 12px 0;
             }
-            .controls {
-                gap: 15px;
-            }
         }
     </style>
 </head>
 <body>
 <div class="game-container">
+    <!-- Верхняя панель: рекорд + пауза + новая (уменьшенные) -->
     <div class="top-panel">
         <div class="highscore-box">
             <div class="highscore-label">РЕКОРД</div>
@@ -279,22 +195,12 @@
         <button class="top-btn new-game-btn" id="newGameBtn">🔄 НОВАЯ</button>
     </div>
 
-    <!-- РАДИО-ПЛЕЕР (РАДИО МИР) -->
-    <div class="radio-player">
-        <div class="radio-info">
-            <span class="radio-icon">📻</span>
-            <span class="radio-station" id="stationName">Радио МИР</span>
-        </div>
-        <div class="radio-controls">
-            <button class="radio-btn" id="playPauseRadioBtn">▶</button>
-            <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="50">
-        </div>
-    </div>
-
+    <!-- Игровое поле -->
     <div class="canvas-wrapper">
         <canvas id="boardCanvas"></canvas>
     </div>
 
+    <!-- Нижняя панель: счёт + большие кнопки -->
     <div class="bottom-panel">
         <div class="score-box">
             <div class="score-label">СЧЁТ</div>
@@ -314,68 +220,6 @@
         tg.expand();
         tg.enableClosingConfirmation();
 
-        // ========== РАДИО МИР (HLS ПОТОК) ==========
-        const RADIO_URL = 'https://cast.radiomir.by/hls/radiomir/live.m3u8';
-        
-        let audio = null;
-        let hls = null;
-        let isPlaying = false;
-        
-        function initRadio() {
-            if (Hls.isSupported()) {
-                audio = new Audio();
-                hls = new Hls();
-                hls.attachMedia(audio);
-                hls.loadSource(RADIO_URL);
-                hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                    if (isPlaying) audio.play().catch(e => console.log("Автозапуск:", e));
-                });
-                hls.on(Hls.Events.ERROR, (_, data) => {
-                    console.warn("HLS error:", data);
-                    if (data.type === Hls.ErrorTypes.NETWORK_ERROR) hls.startLoad();
-                });
-            } 
-            else if (audio?.canPlayType('application/vnd.apple.mpegurl')) {
-                audio = new Audio(RADIO_URL);
-                audio.loop = true;
-                if (isPlaying) audio.play().catch(e => console.log("Автозапуск:", e));
-            }
-            else {
-                document.getElementById('stationName').innerText = "Радио МИР (недоступно)";
-                document.getElementById('playPauseRadioBtn').disabled = true;
-                return;
-            }
-            
-            if (audio) audio.volume = document.getElementById('volumeSlider').value / 100;
-        }
-        
-        function playRadio() {
-            if (!audio) initRadio();
-            if (audio) {
-                audio.play().then(() => {
-                    isPlaying = true;
-                    document.getElementById('playPauseRadioBtn').innerText = '⏸';
-                }).catch(() => {
-                    isPlaying = false;
-                    document.getElementById('playPauseRadioBtn').innerText = '▶';
-                    tg.showAlert("Не удалось запустить радио. Проверьте соединение.");
-                });
-            }
-        }
-        
-        function pauseRadio() {
-            if (audio) { audio.pause(); isPlaying = false; document.getElementById('playPauseRadioBtn').innerText = '▶'; }
-        }
-        
-        function toggleRadio() { isPlaying ? pauseRadio() : playRadio(); }
-        function setVolume(v) { if (audio) audio.volume = v / 100; }
-        
-        // Автозапуск радио после первого касания
-        document.body.addEventListener('touchstart', () => {
-            if (!audio) initRadio();
-            if (audio && !isPlaying) playRadio();
-        }, { once: true });
-        
         // ========== ТЕТРИС ==========
         const COLS = 10, ROWS = 20;
         let canvas = document.getElementById('boardCanvas'), ctx = canvas.getContext('2d');
@@ -386,9 +230,13 @@
         const pauseBtn = document.getElementById('pauseBtn');
         
         const SHAPES = [
-            { m: [[1,1,1,1]], c: '#00e5f0' }, { m: [[1,1],[1,1]], c: '#f7e476' }, { m: [[0,1,0],[1,1,1]], c: '#c084fc' },
-            { m: [[0,1,1],[1,1,0]], c: '#6eeb83' }, { m: [[1,1,0],[0,1,1]], c: '#fc6e6e' },
-            { m: [[1,0,0],[1,1,1]], c: '#fca56e' }, { m: [[0,0,1],[1,1,1]], c: '#6eaefc' }
+            { m: [[1,1,1,1]], c: '#00e5f0' },
+            { m: [[1,1],[1,1]], c: '#f7e476' },
+            { m: [[0,1,0],[1,1,1]], c: '#c084fc' },
+            { m: [[0,1,1],[1,1,0]], c: '#6eeb83' },
+            { m: [[1,1,0],[0,1,1]], c: '#fc6e6e' },
+            { m: [[1,0,0],[1,1,1]], c: '#fca56e' },
+            { m: [[0,0,1],[1,1,1]], c: '#6eaefc' }
         ];
         
         function resizeCanvas() {
@@ -404,26 +252,56 @@
         window.addEventListener('resize', () => setTimeout(resizeCanvas, 10));
         window.addEventListener('load', () => setTimeout(resizeCanvas, 50));
         
-        function togglePause() { if (!gameOver) { paused = !paused; pauseBtn.innerText = paused ? "▶ ИГРАТЬ" : "⏸ ПАУЗА"; if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); draw(); } }
+        function togglePause() { 
+            if (!gameOver) { 
+                paused = !paused; 
+                pauseBtn.innerText = paused ? "▶ ИГРАТЬ" : "⏸ ПАУЗА"; 
+                if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); 
+                draw(); 
+            } 
+        }
         
-        function loadHigh() { tg.CloudStorage.getItem(STORAGE_KEY, (_, val) => { high = (!val || isNaN(val)) ? 0 : parseInt(val); highSpan.innerText = high; }); }
-        function saveHigh() { if(score > high) { high = score; highSpan.innerText = high; tg.CloudStorage.setItem(STORAGE_KEY, high.toString()); if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success'); } }
+        function loadHigh() { 
+            tg.CloudStorage.getItem(STORAGE_KEY, (_, val) => { 
+                high = (!val || isNaN(val)) ? 0 : parseInt(val); 
+                highSpan.innerText = high; 
+            }); 
+        }
         
-        function randomPiece() { let idx = Math.floor(Math.random()*SHAPES.length), s = SHAPES[idx]; return { m: s.m.map(r=>[...r]), c: s.c, x: Math.floor((COLS - s.m[0].length)/2), y: 0 }; }
+        function saveHigh() { 
+            if(score > high) { 
+                high = score; 
+                highSpan.innerText = high; 
+                tg.CloudStorage.setItem(STORAGE_KEY, high.toString()); 
+                if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success'); 
+            } 
+        }
+        
+        function randomPiece() { 
+            let idx = Math.floor(Math.random()*SHAPES.length), s = SHAPES[idx]; 
+            return { m: s.m.map(r=>[...r]), c: s.c, x: Math.floor((COLS - s.m[0].length)/2), y: 0 }; 
+        }
         
         function collide(p, offX, offY) {
-            for(let i=0; i<p.m.length; i++) for(let j=0; j<p.m[0].length; j++) if(p.m[i][j]) {
-                let nx = p.x + j + offX, ny = p.y + i + offY;
-                if(nx<0 || nx>=COLS || ny>=ROWS || (ny>=0 && board[ny][nx])) return true;
-            } return false;
+            for(let i=0; i<p.m.length; i++) 
+                for(let j=0; j<p.m[0].length; j++) 
+                    if(p.m[i][j]) {
+                        let nx = p.x + j + offX, ny = p.y + i + offY;
+                        if(nx<0 || nx>=COLS || ny>=ROWS) return true;
+                        if(ny>=0 && board[ny][nx]) return true;
+                    }
+            return false;
         }
         
         function merge() {
-            for(let i=0; i<currentPiece.m.length; i++) for(let j=0; j<currentPiece.m[0].length; j++) if(currentPiece.m[i][j]) {
-                let x = currentPiece.x + j, y = currentPiece.y + i;
-                if(y>=0 && y<ROWS && x>=0 && x<COLS) board[y][x] = currentPiece.c;
-            }
-            clearLines(); spawn();
+            for(let i=0; i<currentPiece.m.length; i++) 
+                for(let j=0; j<currentPiece.m[0].length; j++) 
+                    if(currentPiece.m[i][j]) {
+                        let x = currentPiece.x + j, y = currentPiece.y + i;
+                        if(y>=0 && y<ROWS && x>=0 && x<COLS) board[y][x] = currentPiece.c;
+                    }
+            clearLines(); 
+            spawn();
         }
         
         function clearLines() {
@@ -437,22 +315,122 @@
                     cleared++;
                 } else row--;
             }
-            if(cleared) { score += [0,100,300,600,1000][cleared]; scoreSpan.innerText = score; saveHigh(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); }
+            if(cleared) { 
+                score += [0,100,300,600,1000][cleared]; 
+                scoreSpan.innerText = score; 
+                saveHigh(); 
+                if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); 
+            }
         }
         
-        function spawn() { currentPiece = randomPiece(); if(collide(currentPiece,0,0)) gameEnd(); draw(); }
-        function move(dx, dy) { if(gameOver||paused||!currentPiece) return; if(!collide(currentPiece,dx,dy)) { currentPiece.x+=dx; currentPiece.y+=dy; draw(); return; } if(dy===1) merge(); }
-        function rotate() { if(gameOver||paused||!currentPiece) return; let old = currentPiece.m; let rotated = old[0].map((_,i)=>old.map(r=>r[i]).reverse()); currentPiece.m = rotated; let off=0; while(collide(currentPiece,0,0)) { currentPiece.x += (off===0?-1:1); if(++off>5) { currentPiece.m=old; currentPiece.x -= (off===0?-1:1); break; } } draw(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('soft'); }
-        function gameEnd() { if(gameOver) return; gameOver=true; if(gameLoop) clearInterval(gameLoop); gameLoop=null; if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error'); tg.showAlert(`Игра окончена! Счёт: ${score}`); }
-        function reset() { if(gameLoop) clearInterval(gameLoop); board = Array(ROWS).fill().map(()=>Array(COLS).fill(0)); score=0; gameOver=false; paused=false; pauseBtn.innerText="⏸ ПАУЗА"; scoreSpan.innerText="0"; currentPiece=randomPiece(); if(collide(currentPiece,0,0)) { board=Array(ROWS).fill().map(()=>Array(COLS).fill(0)); currentPiece=randomPiece(); } gameLoop = setInterval(()=>{ if(!gameOver && !paused && currentPiece) move(0,1); }, BASE_INTERVAL); draw(); }
+        function spawn() { 
+            currentPiece = randomPiece(); 
+            if(collide(currentPiece,0,0)) gameEnd(); 
+            draw(); 
+        }
+        
+        function move(dx, dy) { 
+            if(gameOver||paused||!currentPiece) return; 
+            if(!collide(currentPiece,dx,dy)) { 
+                currentPiece.x+=dx; 
+                currentPiece.y+=dy; 
+                draw(); 
+                return; 
+            } 
+            if(dy===1) merge(); 
+        }
+        
+        function rotate() { 
+            if(gameOver||paused||!currentPiece) return; 
+            let old = currentPiece.m; 
+            let rotated = old[0].map((_,i)=>old.map(r=>r[i]).reverse()); 
+            currentPiece.m = rotated; 
+            let off=0; 
+            while(collide(currentPiece,0,0)) { 
+                currentPiece.x += (off===0?-1:1); 
+                if(++off>5) { 
+                    currentPiece.m=old; 
+                    currentPiece.x -= (off===0?-1:1); 
+                    break; 
+                } 
+            } 
+            draw(); 
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('soft'); 
+        }
+        
+        function gameEnd() { 
+            if(gameOver) return; 
+            gameOver=true; 
+            if(gameLoop) clearInterval(gameLoop); 
+            gameLoop=null; 
+            if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error'); 
+            tg.showAlert(`Игра окончена! Счёт: ${score}`); 
+        }
+        
+        function reset() { 
+            if(gameLoop) clearInterval(gameLoop); 
+            board = Array(ROWS).fill().map(()=>Array(COLS).fill(0)); 
+            score=0; 
+            gameOver=false; 
+            paused=false; 
+            pauseBtn.innerText="⏸ ПАУЗА"; 
+            scoreSpan.innerText="0"; 
+            currentPiece=randomPiece(); 
+            if(collide(currentPiece,0,0)) { 
+                board=Array(ROWS).fill().map(()=>Array(COLS).fill(0)); 
+                currentPiece=randomPiece(); 
+            } 
+            gameLoop = setInterval(()=>{ 
+                if(!gameOver && !paused && currentPiece) move(0,1); 
+            }, BASE_INTERVAL); 
+            draw(); 
+        }
         
         function draw() {
             ctx.clearRect(0,0,canvas.width,canvas.height);
-            for(let i=0;i<ROWS;i++) for(let j=0;j<COLS;j++) { let col=board[i][j]; if(col) { ctx.fillStyle=col; ctx.fillRect(j*blockSize,i*blockSize,blockSize-0.5,blockSize-0.5); } else { ctx.fillStyle='#1f1f3a'; ctx.fillRect(j*blockSize,i*blockSize,blockSize-0.5,blockSize-0.5); ctx.fillStyle='#2a2a4a'; ctx.fillRect(j*blockSize+1,i*blockSize+1,blockSize-2.5,blockSize-2.5); } }
-            if(currentPiece && !gameOver) for(let i=0;i<currentPiece.m.length;i++) for(let j=0;j<currentPiece.m[0].length;j++) if(currentPiece.m[i][j]) { ctx.fillStyle=currentPiece.c; ctx.fillRect((currentPiece.x+j)*blockSize,(currentPiece.y+i)*blockSize,blockSize-0.5,blockSize-0.5); }
-            if(paused && !gameOver) { ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='white'; ctx.font=`${Math.floor(blockSize*1.2)}px monospace`; ctx.textAlign='center'; ctx.fillText('ПАУЗА',canvas.width/2,canvas.height/2); }
-            ctx.beginPath(); ctx.strokeStyle='#3d3d6b'; ctx.lineWidth=0.5;
-            for(let i=0;i<=COLS;i++) { ctx.moveTo(i*blockSize,0); ctx.lineTo(i*blockSize,canvas.height); ctx.stroke(); ctx.moveTo(0,i*blockSize); ctx.lineTo(canvas.width,i*blockSize); ctx.stroke(); }
+            for(let i=0;i<ROWS;i++) {
+                for(let j=0;j<COLS;j++) { 
+                    let col=board[i][j]; 
+                    if(col) { 
+                        ctx.fillStyle=col; 
+                        ctx.fillRect(j*blockSize,i*blockSize,blockSize-0.5,blockSize-0.5); 
+                    } else { 
+                        ctx.fillStyle='#1f1f3a'; 
+                        ctx.fillRect(j*blockSize,i*blockSize,blockSize-0.5,blockSize-0.5); 
+                        ctx.fillStyle='#2a2a4a'; 
+                        ctx.fillRect(j*blockSize+1,i*blockSize+1,blockSize-2.5,blockSize-2.5); 
+                    } 
+                }
+            }
+            if(currentPiece && !gameOver) {
+                for(let i=0;i<currentPiece.m.length;i++) {
+                    for(let j=0;j<currentPiece.m[0].length;j++) {
+                        if(currentPiece.m[i][j]) {
+                            ctx.fillStyle=currentPiece.c;
+                            ctx.fillRect((currentPiece.x+j)*blockSize,(currentPiece.y+i)*blockSize,blockSize-0.5,blockSize-0.5);
+                        }
+                    }
+                }
+            }
+            if(paused && !gameOver) {
+                ctx.fillStyle='rgba(0,0,0,0.7)';
+                ctx.fillRect(0,0,canvas.width,canvas.height);
+                ctx.fillStyle='white';
+                ctx.font=`${Math.floor(blockSize*1.2)}px monospace`;
+                ctx.textAlign='center';
+                ctx.fillText('ПАУЗА',canvas.width/2,canvas.height/2);
+            }
+            ctx.beginPath();
+            ctx.strokeStyle='#3d3d6b';
+            ctx.lineWidth=0.5;
+            for(let i=0;i<=COLS;i++) {
+                ctx.moveTo(i*blockSize,0);
+                ctx.lineTo(i*blockSize,canvas.height);
+                ctx.stroke();
+                ctx.moveTo(0,i*blockSize);
+                ctx.lineTo(canvas.width,i*blockSize);
+                ctx.stroke();
+            }
         }
         
         function attachControls() {
@@ -461,23 +439,33 @@
             document.getElementById('downBtn').onclick = (e) => { e.preventDefault(); move(0,1); };
             document.getElementById('newGameBtn').onclick = (e) => { e.preventDefault(); reset(); };
             document.getElementById('pauseBtn').onclick = (e) => { e.preventDefault(); togglePause(); };
-            document.getElementById('playPauseRadioBtn').onclick = () => toggleRadio();
-            document.getElementById('volumeSlider').oninput = (e) => setVolume(e.target.value);
+            
             canvas.addEventListener('touchstart', (e) => { e.preventDefault(); rotate(); });
             canvas.addEventListener('mousedown', () => rotate());
+            
             window.addEventListener('keydown', (e) => {
                 let k = e.key;
                 if(k === 'ArrowLeft') move(-1,0);
                 else if(k === 'ArrowRight') move(1,0);
                 else if(k === 'ArrowDown') move(0,1);
                 else if(k === 'ArrowUp') rotate();
-                else if(k === ' ' || k === 'Space') { if(!gameOver && currentPiece && !paused) { while(!collide(currentPiece,0,1)) currentPiece.y++; merge(); draw(); } e.preventDefault(); }
+                else if(k === ' ' || k === 'Space') { 
+                    if(!gameOver && currentPiece && !paused) { 
+                        while(!collide(currentPiece,0,1)) currentPiece.y++; 
+                        merge(); 
+                        draw(); 
+                    } 
+                    e.preventDefault(); 
+                }
                 else if(k === 'p' || k === 'P') togglePause();
                 else if(k === 'r' || k === 'R') reset();
             });
         }
         
-        loadHigh(); reset(); attachControls(); resizeCanvas();
+        loadHigh(); 
+        reset(); 
+        attachControls(); 
+        resizeCanvas();
     })();
 </script>
 </body>
