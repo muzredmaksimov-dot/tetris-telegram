@@ -29,10 +29,10 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
             width: 100%;
-            max-width: 500px;
-            margin: 0 auto;
+            max-width: 100%;
+            height: 100%;
         }
 
         /* ВЕРХНЯЯ ПАНЕЛЬ */
@@ -40,25 +40,26 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             width: 100%;
+            flex-shrink: 0;
         }
 
         .highscore-box {
             background: var(--tg-theme-secondary-bg-color, #16213e);
-            padding: 6px 12px;
+            padding: 5px 10px;
             border-radius: 40px;
             text-align: center;
             flex: 1;
         }
 
         .highscore-label {
-            font-size: 10px;
+            font-size: 9px;
             color: var(--tg-theme-hint-color, #aaa);
         }
 
         .highscore-value {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 800;
             color: var(--tg-theme-text-color, #fff);
         }
@@ -67,9 +68,9 @@
             background: var(--tg-theme-button-color, #2c3e66);
             border: none;
             color: white;
-            font-size: 18px;
+            font-size: 12px;
             font-weight: bold;
-            padding: 8px 16px;
+            padding: 6px 12px;
             border-radius: 40px;
             cursor: pointer;
             box-shadow: 0 2px 0 rgba(0,0,0,0.2);
@@ -81,52 +82,50 @@
             background: var(--tg-theme-destructive-text-color, #e94560);
         }
 
-        .pause-btn {
-            background: var(--tg-theme-button-color, #2c3e66);
-        }
-
         .top-btn:active {
             transform: translateY(2px);
             box-shadow: none;
         }
 
-        /* ИГРОВОЕ ПОЛЕ — АДАПТИВНОЕ */
+        /* ИГРОВОЕ ПОЛЕ — ОГРАНИЧИВАЕМ ВЫСОТУ */
         .canvas-wrapper {
             display: flex;
             justify-content: center;
             width: 100%;
+            flex-shrink: 1;
         }
 
         #boardCanvas {
             display: block;
             width: 100%;
             height: auto;
+            max-height: 55vh;
             border-radius: 12px;
             box-shadow: 0 8px 20px rgba(0,0,0,0.3);
             background-color: #0a0a1a;
-            aspect-ratio: 1 / 2;
         }
 
         /* НИЖНЯЯ ПАНЕЛЬ */
         .bottom-panel {
             width: 100%;
+            flex-shrink: 0;
         }
 
         .score-box {
             background: var(--tg-theme-secondary-bg-color, #16213e);
-            padding: 6px 12px;
+            padding: 5px 10px;
             border-radius: 40px;
             text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .score-label {
-            font-size: 10px;
+            font-size: 9px;
             color: var(--tg-theme-hint-color, #aaa);
         }
 
         .score-value {
-            font-size: 22px;
+            font-size: 18px;
             font-weight: 800;
             color: var(--tg-theme-text-color, #fff);
         }
@@ -141,10 +140,10 @@
             background: var(--tg-theme-button-color, #2c3e66);
             border: none;
             color: white;
-            font-size: 22px;
+            font-size: 20px;
             font-weight: bold;
-            padding: 10px 0;
-            width: 70px;
+            padding: 8px 0;
+            width: 65px;
             border-radius: 50px;
             cursor: pointer;
             box-shadow: 0 3px 0 rgba(0,0,0,0.2);
@@ -157,28 +156,19 @@
             box-shadow: none;
         }
 
-        /* АДАПТАЦИЯ ПОД МАЛЕНЬКИЕ ЭКРАНЫ */
+        /* МАЛЕНЬКИЕ ЭКРАНЫ */
         @media (max-width: 450px) {
             .ctrl-btn {
                 width: 55px;
                 font-size: 18px;
-                padding: 8px 0;
+                padding: 6px 0;
             }
             .top-btn {
-                padding: 6px 12px;
-                font-size: 14px;
+                padding: 5px 10px;
+                font-size: 11px;
             }
-            .highscore-value {
-                font-size: 16px;
-            }
-            .score-value {
-                font-size: 20px;
-            }
-            body {
-                padding: 5px;
-            }
-            .game-container {
-                gap: 8px;
+            #boardCanvas {
+                max-height: 50vh;
             }
         }
 
@@ -188,15 +178,17 @@
                 font-size: 16px;
             }
             .top-btn {
-                padding: 5px 10px;
-                font-size: 12px;
+                padding: 4px 8px;
+                font-size: 10px;
+            }
+            #boardCanvas {
+                max-height: 45vh;
             }
         }
     </style>
 </head>
 <body>
 <div class="game-container">
-    <!-- Верхняя панель: рекорд + пауза + новая -->
     <div class="top-panel">
         <div class="highscore-box">
             <div class="highscore-label">РЕКОРД</div>
@@ -206,18 +198,15 @@
         <button class="top-btn new-game-btn" id="newGameBtn">🔄 НОВАЯ</button>
     </div>
 
-    <!-- Игровое поле -->
     <div class="canvas-wrapper">
         <canvas id="boardCanvas"></canvas>
     </div>
 
-    <!-- Нижняя панель: счёт + кнопки -->
     <div class="bottom-panel">
         <div class="score-box">
             <div class="score-label">СЧЁТ</div>
             <div class="score-value" id="scoreDisplay">0</div>
         </div>
-
         <div class="controls">
             <button class="ctrl-btn" id="leftBtn">◀</button>
             <button class="ctrl-btn" id="rightBtn">▶</button>
@@ -264,30 +253,49 @@
             { matrix: [[0,0,1],[1,1,1]], color: '#6eaefc' }
         ];
 
-        // АДАПТИВНЫЙ РАЗМЕР
+        // АДАПТИВНЫЙ РАЗМЕР С УЧЁТОМ ВЫСОТЫ
         function resizeCanvas() {
             const wrapper = canvas.parentElement;
             const maxWidth = wrapper.clientWidth;
-            canvas.width = maxWidth;
-            canvas.height = maxWidth * 2;
+            
+            // Ограничиваем высоту — не более 55% от высоты экрана
+            const maxHeight = window.innerHeight * 0.55;
+            const calculatedHeight = maxWidth * 2;
+            
+            if (calculatedHeight > maxHeight) {
+                // Если поле слишком высокое — подстраиваем под высоту
+                canvas.style.width = (maxHeight / 2) + 'px';
+                canvas.width = maxHeight / 2;
+                canvas.style.height = maxHeight + 'px';
+                canvas.height = maxHeight;
+            } else {
+                // Иначе растягиваем по ширине
+                canvas.style.width = maxWidth + 'px';
+                canvas.width = maxWidth;
+                canvas.style.height = calculatedHeight + 'px';
+                canvas.height = calculatedHeight;
+            }
+            
             blockSize = canvas.width / COLS;
             draw();
         }
         
         window.addEventListener('resize', () => {
-            resizeCanvas();
-            draw();
+            setTimeout(resizeCanvas, 10);
         });
         
-        // ПАУЗА
+        window.addEventListener('load', () => {
+            setTimeout(resizeCanvas, 50);
+        });
+        
         function togglePause() {
             if (isGameOver) return;
             isPaused = !isPaused;
             pauseBtn.innerText = isPaused ? "▶ ИГРАТЬ" : "⏸ ПАУЗА";
             if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            draw();
         }
         
-        // РЕКОРДЫ
         function loadHighScoreFromCloud() {
             tg.CloudStorage.getItem(STORAGE_KEY, (err, value) => {
                 if (!err && value && !isNaN(parseInt(value))) {
@@ -316,7 +324,6 @@
             }
         }
         
-        // ИГРОВАЯ ЛОГИКА
         function randomPiece() {
             const idx = Math.floor(Math.random() * SHAPES.length);
             const shape = SHAPES[idx];
@@ -499,7 +506,6 @@
                 }
             }
             
-            // Затемнение при паузе
             if(isPaused && !isGameOver) {
                 ctx.fillStyle = 'rgba(0,0,0,0.7)';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -544,7 +550,7 @@
                 else if(key === 'ArrowDown') { movePiece(0,1); e.preventDefault();}
                 else if(key === 'ArrowUp') { rotatePiece(); e.preventDefault();}
                 else if(key === ' ' || key === 'Space') { 
-                    if(!isGameOver && currentPiece) {
+                    if(!isGameOver && currentPiece && !isPaused) {
                         while(!collide(currentPiece, board, 0, 1)) { currentPiece.y++; }
                         mergePiece();
                         draw();
