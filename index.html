@@ -36,12 +36,12 @@
             margin: 0 auto;
         }
 
-        /* ВЕРХНЯЯ ПАНЕЛЬ — УМЕНЬШЕННАЯ */
+        /* ВЕРХНЯЯ ПАНЕЛЬ */
         .top-panel {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             width: 100%;
             flex-shrink: 0;
         }
@@ -71,9 +71,9 @@
             background: var(--tg-theme-button-color, #2c3e66);
             border: none;
             color: white;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
-            padding: 5px 12px;
+            padding: 5px 10px;
             border-radius: 40px;
             cursor: pointer;
             box-shadow: 0 2px 0 rgba(0,0,0,0.2);
@@ -83,6 +83,10 @@
 
         .new-game-btn {
             background: #e94560;
+        }
+
+        .share-btn {
+            background: #4c9aff;
         }
 
         .top-btn:active {
@@ -162,7 +166,86 @@
             box-shadow: none;
         }
 
-        /* АДАПТАЦИЯ ДЛЯ НЕБОЛЬШИХ ЭКРАНОВ */
+        /* МОДАЛЬНОЕ ОКНО ДЛЯ ШАРИНГА */
+        .share-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .share-modal-content {
+            background: var(--tg-theme-secondary-bg-color, #16213e);
+            border-radius: 28px;
+            padding: 24px;
+            width: 85%;
+            max-width: 320px;
+            text-align: center;
+        }
+
+        .share-modal-content h3 {
+            color: white;
+            margin: 0 0 10px 0;
+            font-size: 20px;
+        }
+
+        .share-score-preview {
+            background: #0a0a1a;
+            border-radius: 20px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .share-score-preview .big-score {
+            font-size: 48px;
+            font-weight: 800;
+            color: #f7e476;
+        }
+
+        .share-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .share-app-btn {
+            background: #4c9aff;
+            border: none;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 12px;
+            border-radius: 40px;
+            cursor: pointer;
+        }
+
+        .share-copy-btn {
+            background: var(--tg-theme-button-color, #2c3e66);
+            border: none;
+            color: white;
+            font-size: 14px;
+            padding: 10px;
+            border-radius: 40px;
+            cursor: pointer;
+        }
+
+        .close-modal-btn {
+            background: #e94560;
+            border: none;
+            color: white;
+            font-size: 14px;
+            padding: 10px;
+            border-radius: 40px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
         @media (max-width: 500px) {
             .ctrl-btn {
                 width: 90px;
@@ -171,6 +254,13 @@
             }
             .controls {
                 gap: 15px;
+            }
+            .top-panel {
+                gap: 6px;
+            }
+            .top-btn {
+                font-size: 10px;
+                padding: 4px 8px;
             }
         }
 
@@ -185,7 +275,7 @@
 </head>
 <body>
 <div class="game-container">
-    <!-- Верхняя панель: рекорд + пауза + новая (уменьшенные) -->
+    <!-- Верхняя панель: рекорд + пауза + новая + поделиться -->
     <div class="top-panel">
         <div class="highscore-box">
             <div class="highscore-label">РЕКОРД</div>
@@ -193,6 +283,7 @@
         </div>
         <button class="top-btn pause-btn" id="pauseBtn">⏸ ПАУЗА</button>
         <button class="top-btn new-game-btn" id="newGameBtn">🔄 НОВАЯ</button>
+        <button class="top-btn share-btn" id="shareBtn">📤</button>
     </div>
 
     <!-- Игровое поле -->
@@ -200,7 +291,7 @@
         <canvas id="boardCanvas"></canvas>
     </div>
 
-    <!-- Нижняя панель: счёт + большие кнопки -->
+    <!-- Нижняя панель -->
     <div class="bottom-panel">
         <div class="score-box">
             <div class="score-label">СЧЁТ</div>
@@ -210,6 +301,22 @@
             <button class="ctrl-btn" id="leftBtn">◀</button>
             <button class="ctrl-btn" id="rightBtn">▶</button>
             <button class="ctrl-btn" id="downBtn">▼</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для шаринга -->
+<div id="shareModal" class="share-modal">
+    <div class="share-modal-content">
+        <h3>🏆 Поделиться рекордом</h3>
+        <div class="share-score-preview">
+            <div class="big-score" id="shareScoreValue">0</div>
+            <div style="color:#aaa; font-size:12px; margin-top:8px;">очков в Тетрисе</div>
+        </div>
+        <div class="share-buttons">
+            <button class="share-app-btn" id="shareInstagramBtn">📸 Instagram Stories</button>
+            <button class="share-copy-btn" id="copyResultBtn">📋 Скопировать результат</button>
+            <button class="close-modal-btn" id="closeModalBtn">Закрыть</button>
         </div>
     </div>
 </div>
@@ -239,6 +346,67 @@
             { m: [[0,0,1],[1,1,1]], c: '#6eaefc' }
         ];
         
+        // ========== ФУНКЦИЯ ШАРИНГА ==========
+        function shareScore() {
+            const currentScore = score;
+            const message = `🎮 Мой рекорд в Тетрисе: ${currentScore} очков! Попробуй побить! 🏆\n\nИграй в Telegram: t.me/crazy_tetris_bot`;
+            
+            // Показываем модальное окно с предпросмотром
+            document.getElementById('shareScoreValue').innerText = currentScore;
+            document.getElementById('shareModal').style.display = 'flex';
+        }
+        
+        function closeModal() {
+            document.getElementById('shareModal').style.display = 'none';
+        }
+        
+        function shareToInstagram() {
+            const currentScore = score;
+            const shareText = `🎮 Мой рекорд в Тетрисе: ${currentScore} очков! Играй в Telegram: t.me/crazy_tetris_bot`;
+            
+            // Кодируем текст для URL
+            const encodedText = encodeURIComponent(shareText);
+            
+            // Пытаемся открыть Instagram Stories (если установлено приложение)
+            // Это работает только на мобильных устройствах с установленным Instagram
+            const instagramStoriesUrl = `instagram://story?text=${encodedText}`;
+            const instagramWebUrl = `https://www.instagram.com/`;
+            
+            // Сначала пробуем открыть через приложение
+            window.location.href = instagramStoriesUrl;
+            
+            // Таймер на случай, если приложение не установлено — открываем веб-версию
+            setTimeout(() => {
+                window.open(instagramWebUrl, '_blank');
+            }, 500);
+            
+            closeModal();
+        }
+        
+        function copyToClipboard() {
+            const currentScore = score;
+            const text = `🎮 Мой рекорд в Тетрисе: ${currentScore} очков! Попробуй побить! 🏆\n\nИграй в Telegram: t.me/crazy_tetris_bot`;
+            
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    tg.showAlert("✅ Результат скопирован! Можешь вставить в любую соцсеть.");
+                }).catch(() => {
+                    tg.showAlert("Не удалось скопировать текст");
+                });
+            } else {
+                // Fallback для старых браузеров
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                tg.showAlert("✅ Результат скопирован!");
+            }
+            closeModal();
+        }
+        
+        // ========== ИГРОВАЯ ЛОГИКА ==========
         function resizeCanvas() {
             let w = canvas.parentElement.clientWidth, h = canvas.parentElement.clientHeight;
             let idealW = h / 2;
@@ -364,7 +532,15 @@
             if(gameLoop) clearInterval(gameLoop); 
             gameLoop=null; 
             if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error'); 
-            tg.showAlert(`Игра окончена! Счёт: ${score}`); 
+            tg.showAlert(`Игра окончена! Счёт: ${score}`);
+            
+            // При окончании игры предлагаем поделиться
+            setTimeout(() => {
+                tg.showAlert("🎉 Отличный результат! Хочешь поделиться рекордом?", [
+                    { text: "Поделиться", callback: () => shareScore() },
+                    { text: "Закрыть", callback: () => {} }
+                ]);
+            }, 500);
         }
         
         function reset() { 
@@ -439,6 +615,12 @@
             document.getElementById('downBtn').onclick = (e) => { e.preventDefault(); move(0,1); };
             document.getElementById('newGameBtn').onclick = (e) => { e.preventDefault(); reset(); };
             document.getElementById('pauseBtn').onclick = (e) => { e.preventDefault(); togglePause(); };
+            document.getElementById('shareBtn').onclick = (e) => { e.preventDefault(); shareScore(); };
+            
+            // Модальное окно
+            document.getElementById('shareInstagramBtn').onclick = () => shareToInstagram();
+            document.getElementById('copyResultBtn').onclick = () => copyToClipboard();
+            document.getElementById('closeModalBtn').onclick = () => closeModal();
             
             canvas.addEventListener('touchstart', (e) => { e.preventDefault(); rotate(); });
             canvas.addEventListener('mousedown', () => rotate());
